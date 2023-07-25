@@ -1,13 +1,13 @@
 # Scarico notizie stock mirati
 
 def getSingleStockMarketNews(stockIndex):
-
     import requests
     from bs4 import BeautifulSoup
     import pandas as pd
     import yfinance as yf
     import numpy as np
     from datetime import datetime
+    import random
     import os
     from IPython.display import clear_output
 
@@ -93,24 +93,43 @@ def getSingleStockMarketNews(stockIndex):
     return SingleStockData
 
 
-def MassiveNewsScaper():
-
+def MassiveNewsScaper (numberOfRandomStocks=50):
     import pandas as pd
     from IPython.display import clear_output
     import time
+    import random
 
     start = time.time()
 
     stockList = pd.read_excel(r"C:\Users\39328\OneDrive\Desktop\S&P500 Constituents.xlsx")['Ticker']
 
-    today = getSingleStockMarketNews(stockList)
+    # Esperimento: prendere ogni giorno 30 stocks a random in un sample IMMENSO con tutte i ticker di Yahoo finance
+
+    # Importa i dati
+    allStocks = pd.read_excel(r"D:\Credit Rating Data\All Yahoo Finance Stock Tickers.xlsx").dropna()
+    allStocks = allStocks[allStocks['Country'] == 'USA'].reset_index()
+
+    # Seleziona 50 Ticker in modo random
+
+    AtickerNumber = numberOfRandomStocks
+
+    alternativeTicker = list()
+    for i in range(0, AtickerNumber):
+        alternativeTicker.append(random.choice(allStocks['Ticker']))
+    alternativeTicker = pd.DataFrame(alternativeTicker).set_axis([0], axis=1)
+
+    stockList = pd.concat([stockList, alternativeTicker], axis=0).reset_index()
+    del [stockList['index']]
+
+    today = getSingleStockMarketNews(stockList[0])
 
     base = pd.read_excel(
         r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\SingleStockNews.xlsx")
 
     total = pd.concat([base, today], axis=0).drop_duplicates(subset='Article')
     total.to_excel(
-        r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\SingleStockNews.xlsx")
+        r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\SingleStockNews.xlsx",
+        index=False)
 
     print('\n')
     print('DOWNLOAD HIGHLIGHTS')
@@ -121,6 +140,7 @@ def MassiveNewsScaper():
     print('COMPLETE DATASET')
     print('Total News:', len(total['Date']))
     print('Number of stock Analyzed:', len(total['Stock'].unique()))
+    print('Net number of news added:', len(total) - len(base))
 
     print('\n')
     end = time.time()
