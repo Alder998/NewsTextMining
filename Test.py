@@ -2,15 +2,15 @@ import NewsDownloadLibrary as nl
 import NewsAlgorithm as ns
 import pandas as pd
 
-print('\n')
-print('-----NEWS PANO-----')
-print('\n')
+#print('\n')
+#print('-----NEWS PANO-----')
+#print('\n')
 
 #pano = nl.getNewsWithIndexPerformance()
 
-print('\n')
-print('-----NEWS DETAILS-----')
-print('\n')
+#print('\n')
+#print('-----NEWS DETAILS-----')
+#print('\n')
 
 #massive = nl.MassiveNewsScaper()
 
