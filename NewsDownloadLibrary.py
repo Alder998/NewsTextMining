@@ -204,8 +204,9 @@ def getSingleStockMarketNews(stockIndex, source='Bing'):
     return SingleStockData
 
 
-def MassiveNewsScaper (numberOfRandomStocks=50, source = 'Bing'):
+def MassiveNewsScaper(numberOfRandomStocks=50, source='Bing', update_returns=False):
     import pandas as pd
+    from datetime import datetime
     from IPython.display import clear_output
     import time
     import random
@@ -237,10 +238,41 @@ def MassiveNewsScaper (numberOfRandomStocks=50, source = 'Bing'):
     base = pd.read_excel(
         r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\SingleStockNews.xlsx")
 
-    total = pd.concat([base, today], axis=0).drop_duplicates(subset='Article')
+    total = pd.concat([base, today], axis=0).drop_duplicates(subset='Article').reset_index()
+    del [total['index']]
     total.to_excel(
         r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\SingleStockNews.xlsx",
         index=False)
+
+    if update_returns == True:
+
+        data = total
+
+        # prendi le date di riferimento del mercato, e calcola il rendimento di ogini stock nel dataset
+
+        newsDate = data['Date'].unique()
+        stockIndex = data['Stock'].unique()
+
+        rightClose = list()
+        for iterat, ticker in enumerate(stockIndex):
+            history = (yf.Ticker(ticker).history('5wk')['Close'].pct_change() * 100).dropna().reset_index()
+            history['Date'] = history['Date'].dt.strftime('%Y.%m.%d')
+            history = pd.concat([pd.Series(np.full(len(history['Date']), ticker)), history], axis=1).set_axis(
+                ['Stock', 'Date',
+                 'Same-Day Close'], axis=1)
+            rightClose.append(history)
+
+            print('Updating Returns - Ticker:', ticker, ' - Progress:',
+                  round(iterat / len(stockIndex) * 100), '%')
+
+            clear_output(wait=True)
+
+        rightClose = pd.concat([series for series in rightClose], axis=0)
+
+        newDataset = data.merge(rightClose, on=['Stock', 'Date'])
+
+        newDataset.to_excel(
+            r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\SingleStockNews1.xlsx")
 
     print('\n')
     print('DOWNLOAD HIGHLIGHTS')
@@ -253,11 +285,16 @@ def MassiveNewsScaper (numberOfRandomStocks=50, source = 'Bing'):
     print('Number of stock Analyzed:', len(total['Stock'].unique()))
     print('Net number of news added:', len(total) - len(base))
 
+    print('News Added on the today:', total['Article'][total['Date'] == datetime.today().strftime('%Y.%m.%d')].count())
+
     print('\n')
     end = time.time()
     print('Data Gathered in:', round(((end - start) / 60), 2), 'Minutes')
 
-    return total
+    if update_returns == True:
+        return newDataset
+    if update_returns == False:
+        return total
 
 
 def getNewsWithIndexPerformance():
