@@ -14,7 +14,7 @@ import pandas as pd
 
 #massive = nl.MassiveNewsScaper()
 
-textList = pd.read_excel(r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\completeDataset.xlsx")
+textList = pd.read_excel(r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\SingleStockNews1.xlsx")
 
 cleanData = ns.PreProcessing(textList).preProcess()
 

@@ -42,8 +42,7 @@ class PreProcessing:
         from sklearn.model_selection import train_test_split
 
         print('Importing data...')
-        stockNews = pd.read_excel(
-            r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\SingleStockNews1.xlsx").dropna()
+        stockNews = self.textList
 
         # Encoding dei rendimenti
 
@@ -108,23 +107,25 @@ class PreProcessing:
                 # print(lemmatized_sentence)
                 stokP = stockNews['Return_enc'][stockNews['Article'] == article].reset_index()['Return_enc'][0]
 
-                lS = pd.DataFrame(pd.DataFrame(lemmatized_sentence).set_axis(['Tokens'],
-                                                                             axis=1)[
-                                      'Tokens'].value_counts()).reset_index()
-                stocks.append(stokP)
+                if len(lemmatized_sentence) > 0:
+                    lS = pd.DataFrame(pd.DataFrame(lemmatized_sentence).set_axis(['Tokens'],
+                                                                                 axis=1)[
+                                          'Tokens'].value_counts()).reset_index()
+                    stocks.append(stokP)
 
-                # Ora applichiamo un POS tagging, vale a dire capire il ruolo sintattico delle parole all'interno di una frase
-                # POS_tag = nltk.pos_tag(lemmatized_sentence)
+                    # Ora applichiamo un POS tagging, vale a dire capire il ruolo sintattico delle parole all'interno di una frase
+                    # POS_tag = nltk.pos_tag(lemmatized_sentence)
 
-                # BAG-OF-WORDS MODEL: Creare una matrice composta di vettori di lunghezza N (=totale parole univoche in ogni
-                # articolo) popolata di un '1' qualora la parola appaia nell'articolo, e 0 altrimenti
+                    # BAG-OF-WORDS MODEL: Creare una matrice composta di vettori di lunghezza N (=totale parole univoche in ogni
+                    # articolo) popolata di un '1' qualora la parola appaia nell'articolo, e 0 altrimenti
 
-                for word in lemmatized_sentence:
-                    allWords.append(word)
+                    for word in lemmatized_sentence:
+                        allWords.append(word)
 
-                preProcSentences.append(lS)
+                    preProcSentences.append(lS)
 
-                print('Processing Articles...', round((i / len(stockNews['Article'])) * 100, 2), '%')
+                    print('Processing Articles...', round((i / len(stockNews['Article'])) * 100, 2), '%')
+                    clear_output(wait=True)
 
         return [preProcSentences, allWords, stocks]
 
