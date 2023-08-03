@@ -18,3 +18,7 @@ textList = pd.read_excel(r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text
 
 cleanData = ns.PreProcessing(textList).preProcess()
 
+BoWEmbedding = ns.Vectorize(cleanData).Embedding(method = 'Bag-of-word')
+
+print(BoWEmbedding)
+

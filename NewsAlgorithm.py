@@ -41,9 +41,16 @@ class PreProcessing:
         import tensorflow as tf
         from sklearn.model_selection import train_test_split
 
-        # Importiamo i dati ed eliminiamo gli NaN
         print('Importing data...')
-        stockNews = self.textList.dropna()
+        stockNews = pd.read_excel(
+            r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\SingleStockNews1.xlsx").dropna()
+
+        # Encoding dei rendimenti
+
+        stockNews.loc[stockNews['Same-Day Close'] > 0, 'Return_enc'] = 'UP'
+        stockNews.loc[stockNews['Same-Day Close'] < 0, 'Return_enc'] = 'DOWN'
+        stockNews.loc[stockNews['Same-Day Close'] > 2, 'Return_enc'] = 'STRONG UP'
+        stockNews.loc[stockNews['Same-Day Close'] < -2, 'Return_enc'] = 'STRONG DOWN'
 
         # Filtriamo per le sole notizie in inglese
 
@@ -99,7 +106,7 @@ class PreProcessing:
                 # print('Article:', i, 'Processed')
 
                 # print(lemmatized_sentence)
-                stokP = stockNews['^GSPC'][stockNews['Article'] == article].reset_index()['^GSPC'][0]
+                stokP = stockNews['Return_enc'][stockNews['Article'] == article].reset_index()['Return_enc'][0]
 
                 lS = pd.DataFrame(pd.DataFrame(lemmatized_sentence).set_axis(['Tokens'],
                                                                              axis=1)[
@@ -119,7 +126,60 @@ class PreProcessing:
 
                 print('Processing Articles...', round((i / len(stockNews['Article'])) * 100, 2), '%')
 
-        return preProcSentences, allWords
+        return [preProcSentences, allWords, stocks]
+
+
+class Vectorize:
+    name = "Text Pre-Processing"
+
+    def __init__(self, processedData):
+        self.processedData = processedData
+        pass
+
+    def Embedding (self, method = 'Bag-of-Word'):
+
+        import pandas as pd
+
+        # La lunghezza di ciascun vettore deve essere la lunghezza di allWords
+
+        print('Creating the BoW Matrix...')
+
+        allWords = pd.Series(self.processedData[1]).drop_duplicates().reset_index()
+        del [allWords['index']]
+
+        allWords = allWords.set_axis(['count'], axis=1)
+
+        bowMatrix = list()
+        for sentenceN in range(0, len(self.processedData[0])):
+            f = allWords.merge(self.processedData[0][sentenceN], left_on='count', right_on='Tokens', how='left')
+            f = f[['count_x', 'count_y']].set_axis(['word', sentenceN], axis=1).fillna(0)
+            bowMatrix.append(f[sentenceN].astype(int))
+
+        bowMatrix = pd.concat([series for series in bowMatrix], axis=1).transpose()
+
+        stocks = pd.DataFrame(self.processedData[2]).set_axis(['Return_enc'], axis=1)
+        bowMatrix = pd.concat([bowMatrix, stocks], axis=1)
+
+        print('Number of Articles:', len(self.processedData[0]))
+        print(bowMatrix)
+
+        # Ogni riga è un articolo, ogni colonna è la presenza di una parola in quell'articolo
+        # Ora possiamo costruire il modello fine a se stesso
+
+        # Encoding delle variabili categoriche
+
+        bowMatrix.loc[bowMatrix['Return_enc'] == 'UP', 'Perf_Encoded'] = 0
+        bowMatrix.loc[bowMatrix['Return_enc'] == 'DOWN', 'Perf_Encoded'] = 1
+        bowMatrix.loc[bowMatrix['Return_enc'] == 'STRONG UP', 'Perf_Encoded'] = 2
+        bowMatrix.loc[bowMatrix['Return_enc'] == 'STRONG DOWN', 'Perf_Encoded'] = 3
+
+        del [bowMatrix['Return_enc']]
+
+        bowMatrix = bowMatrix.dropna()
+
+        return bowMatrix
+
+
 
 
 
