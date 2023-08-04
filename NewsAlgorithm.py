@@ -22,7 +22,7 @@ class PreProcessing:
 
     # Different methods to get different News
 
-    def preProcess (self):
+    def preProcess (self, POS_tagging = False):
 
         # Librerie
         import nltk
@@ -69,6 +69,7 @@ class PreProcessing:
         preProcSentences = list()
         allWords = list()
         stocks = list()
+        POS = list()
         for i, article in enumerate(stockNews['Article']):
 
             if len(article) > 5:
@@ -114,7 +115,37 @@ class PreProcessing:
                     stocks.append(stokP)
 
                     # Ora applichiamo un POS tagging, vale a dire capire il ruolo sintattico delle parole all'interno di una frase
-                    # POS_tag = nltk.pos_tag(lemmatized_sentence)
+
+                    if POS_tagging == True:
+
+                         POS_tag = nltk.pos_tag(lemmatized_sentence)
+
+                         # for syntax in POS_tag:
+                         #    POS_SW.append(syntax)
+
+                         POS_S = list()
+                         for word in range(0, len(POS_tag)):
+                             POS_S.append(pd.DataFrame(POS_tag[word]).T)
+
+                         POS_S = pd.concat([df for df in POS_S], axis=0).set_axis(['word', 'POS'], axis=1).reset_index()
+                         del [POS_S['index']]
+
+                         POS_S = POS_S.dropna()
+
+                         # Selezioniamo delle "Proxy" per delineare l'importanza delle parole nel testo
+
+                         POS_S.loc[(POS_S['POS'] != 'VBD') & (POS_S['POS'] != 'VBG') & (POS_S['POS'] != 'VBN') &
+                                   (POS_S['POS'] != 'VBP') & (POS_S['POS'] != 'VBZ') & (POS_S['POS'] != 'NN') &
+                                   (POS_S['POS'] != 'NNS') & (POS_S['POS'] != 'NNP') & (
+                                               POS_S['POS'] != 'NNPS'), 'POS'] = 10e-5
+
+                         POS_S.loc[(POS_S['POS'] == 'NN') | (POS_S['POS'] == 'NNS') | (POS_S['POS'] == 'NNP') |
+                                   (POS_S['POS'] == 'NNPS'), 'POS'] = 0.8
+
+                         POS_S.loc[(POS_S['POS'] == 'VBD') | (POS_S['POS'] == 'VBG') | (POS_S['POS'] == 'VBN') |
+                                   (POS_S['POS'] == 'VBP') | (POS_S['POS'] == 'VBZ'), 'POS'] = 1
+
+                         POS.append(POS_S)
 
                     # BAG-OF-WORDS MODEL: Creare una matrice composta di vettori di lunghezza N (=totale parole univoche in ogni
                     # articolo) popolata di un '1' qualora la parola appaia nell'articolo, e 0 altrimenti
@@ -127,8 +158,10 @@ class PreProcessing:
                     print('Processing Articles...', round((i / len(stockNews['Article'])) * 100, 2), '%')
                     clear_output(wait=True)
 
-        return [preProcSentences, allWords, stocks]
-
+            if POS_tagging == True:
+                return [preProcSentences, allWords, stocks, POS]
+            if POS_tagging == False:
+                return [preProcSentences, allWords, stocks]
 
 class Vectorize:
     name = "Text Pre-Processing"

@@ -16,7 +16,9 @@ import pandas as pd
 
 textList = pd.read_excel(r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\SingleStockNews1.xlsx")
 
-cleanData = ns.PreProcessing(textList).preProcess()
+print(textList)
+
+cleanData = ns.PreProcessing(textList).preProcess(POS_tagging=True)
 
 BoWEmbedding = ns.Vectorize(cleanData).Embedding(method = 'Bag-of-word')
 
