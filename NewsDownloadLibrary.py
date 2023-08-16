@@ -1,7 +1,6 @@
 # Scarico notizie stock mirati
 
 def getSingleStockMarketNews(stockIndex, source='Bing'):
-
     import requests
     from bs4 import BeautifulSoup
     import pandas as pd
@@ -58,7 +57,7 @@ def getSingleStockMarketNews(stockIndex, source='Bing'):
 
                 results.append(cnbsNews)
 
-                print('Article Gathering (1 out of 2) - Ticker:', stock, ' - Progress:',
+                print('CNBC: Article Gathering (1 out of 2) - Ticker:', stock, ' - Progress:',
                       round(iterat / len(stockIndex) * 100), '%')
 
                 clear_output(wait=True)
@@ -94,7 +93,7 @@ def getSingleStockMarketNews(stockIndex, source='Bing'):
             newsTitle = a[(a.str.contains('mw_quote_news">') == True)].drop_duplicates().reset_index()
             del [newsTitle['index']]
 
-            if newsTitle.empty == False:
+            if (newsTitle.empty == False) & (len(newsTitle[0]) > 1):
 
                 cnbsNews = list()
                 for sNumber in range(1, len(newsTitle)):
@@ -112,7 +111,7 @@ def getSingleStockMarketNews(stockIndex, source='Bing'):
 
                 results.append(cnbsNews)
 
-                print('Article Gathering (1 out of 2) - Ticker:', stock, ' - Progress:',
+                print('MarketWatch: Article Gathering (1 out of 2) - Ticker:', stock, ' - Progress:',
                       round(iterat / len(stockIndex) * 100), '%')
 
                 clear_output(wait=True)
@@ -168,7 +167,7 @@ def getSingleStockMarketNews(stockIndex, source='Bing'):
             results.append(pd.concat([today, titleList, authors, pd.Series(np.full(len(titleList), stock))],
                                      axis=1).set_axis(['Date', 'Article', 'Author', 'Stock'], axis=1))
 
-            print('Article Gathering (1 out of 2) - Ticker:', stock, ' - Progress:',
+            print('Bing: Article Gathering (1 out of 2) - Ticker:', stock, ' - Progress:',
                   round(iterat / len(stockIndex) * 100), '%')
 
             clear_output(wait=True)
@@ -210,6 +209,8 @@ def MassiveNewsScaper(numberOfRandomStocks=50, source='Bing', update_returns=Fal
     from IPython.display import clear_output
     import time
     import random
+    import numpy as np
+    import yfinance as yf
 
     start = time.time()
 
@@ -255,17 +256,19 @@ def MassiveNewsScaper(numberOfRandomStocks=50, source='Bing', update_returns=Fal
 
         rightClose = list()
         for iterat, ticker in enumerate(stockIndex):
-            history = (yf.Ticker(ticker).history('5wk')['Close'].pct_change() * 100).dropna().reset_index()
-            history['Date'] = history['Date'].dt.strftime('%Y.%m.%d')
-            history = pd.concat([pd.Series(np.full(len(history['Date']), ticker)), history], axis=1).set_axis(
-                ['Stock', 'Date',
-                 'Same-Day Close'], axis=1)
-            rightClose.append(history)
+            history = (yf.Ticker(ticker).history('2mo')['Close'].pct_change() * 100).dropna().reset_index()
 
-            print('Updating Returns - Ticker:', ticker, ' - Progress:',
-                  round(iterat / len(stockIndex) * 100), '%')
+            if history['Date'].empty == False:
+                history['Date'] = history['Date'].dt.strftime('%Y.%m.%d')
+                history = pd.concat([pd.Series(np.full(len(history['Date']), ticker)), history], axis=1).set_axis(
+                    ['Stock', 'Date',
+                     'Same-Day Close'], axis=1)
+                rightClose.append(history)
 
-            clear_output(wait=True)
+                print('Updating Returns - Ticker:', ticker, ' - Progress:',
+                      round(iterat / len(stockIndex) * 100), '%')
+
+                clear_output(wait=True)
 
         rightClose = pd.concat([series for series in rightClose], axis=0)
 
