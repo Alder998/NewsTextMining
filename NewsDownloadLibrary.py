@@ -204,6 +204,7 @@ def getSingleStockMarketNews(stockIndex, source='Bing'):
 
 
 def MassiveNewsScaper(numberOfRandomStocks=50, source='Bing', update_returns=False):
+
     import pandas as pd
     from datetime import datetime
     from IPython.display import clear_output
@@ -211,6 +212,8 @@ def MassiveNewsScaper(numberOfRandomStocks=50, source='Bing', update_returns=Fal
     import random
     import numpy as np
     import yfinance as yf
+    import psycopg2
+    from sqlalchemy import create_engine
 
     start = time.time()
 
@@ -265,7 +268,7 @@ def MassiveNewsScaper(numberOfRandomStocks=50, source='Bing', update_returns=Fal
                      'Same-Day Close'], axis=1)
                 rightClose.append(history)
 
-                print('Updating Returns - Ticker:', ticker, ' - Progress:',
+                print(source, ':', 'Updating Returns - Ticker:', ticker, ' - Progress:',
                       round(iterat / len(stockIndex) * 100), '%')
 
                 clear_output(wait=True)
@@ -276,6 +279,23 @@ def MassiveNewsScaper(numberOfRandomStocks=50, source='Bing', update_returns=Fal
 
         newDataset.to_excel(
             r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\SingleStockNews1.xlsx")
+
+        # Aggiungi il dataset a SQL
+
+        file = newDataset
+
+        connection = psycopg2.connect(
+            database="News_Data",
+            user="postgres",
+            password="Davidescemo",
+            host="localhost",
+            port="5432"
+        )
+
+        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+        file.to_sql('News_Scraping_Data', engine, if_exists='replace', index=False)
+
+        connection.close()
 
     print('\n')
     print('DOWNLOAD HIGHLIGHTS')
