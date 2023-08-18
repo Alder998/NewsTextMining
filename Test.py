@@ -1,6 +1,7 @@
 import NewsDownloadLibrary as nl
 import NewsAlgorithm as ns
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 #print('\n')
 #print('-----NEWS PANO-----')
@@ -18,9 +19,11 @@ textList = pd.read_excel(r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text
 
 print(textList)
 
-cleanData = ns.PreProcessing(textList).preProcess(POS_tagging=True)
+cleanData = ns.PreProcessing(textList).preProcess(POS_tagging=False)
 
 BoWEmbedding = ns.Vectorize(cleanData).Embedding(method = 'Bag-of-word')
+
+modelSet = ns.Model(BoWEmbedding, testSize=0.40).TrainTestSplit()
 
 print(BoWEmbedding)
 

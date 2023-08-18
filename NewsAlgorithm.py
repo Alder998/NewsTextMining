@@ -70,6 +70,7 @@ class PreProcessing:
         allWords = list()
         stocks = list()
         POS = list()
+
         for i, article in enumerate(stockNews['Article']):
 
             if len(article) > 5:
@@ -156,12 +157,11 @@ class PreProcessing:
                     preProcSentences.append(lS)
 
                     print('Processing Articles...', round((i / len(stockNews['Article'])) * 100, 2), '%')
-                    clear_output(wait=True)
 
-            if POS_tagging == True:
-                return [preProcSentences, allWords, stocks, POS]
-            if POS_tagging == False:
-                return [preProcSentences, allWords, stocks]
+        if POS_tagging == True:
+            return [preProcSentences, allWords, stocks, POS]
+        if POS_tagging == False:
+            return [preProcSentences, allWords, stocks]
 
 class Vectorize:
     name = "Text Pre-Processing"
@@ -212,6 +212,67 @@ class Vectorize:
         bowMatrix = bowMatrix.dropna()
 
         return bowMatrix
+
+
+class Model:
+    name = "Text Modelling"
+
+    def __init__(self, textEmbedding, testSize):
+        self.textEmbedding = textEmbedding
+        self.testSize = testSize
+        pass
+
+    def TrainTestSplit (self):
+
+        import pandas as pd
+        import numpy as np
+        from sklearn.model_selection import train_test_split
+
+        # dividi in train e test set
+
+        df = train_test_split(self.textEmbedding, test_size=self.testSize)
+
+        bowMatrixTrain = df[0]
+        bowMatrixTest = df[1]
+
+        print('\n')
+        print('Train Size:', len(bowMatrixTrain[0]))
+        print('\n')
+
+        # Preparo i dati
+
+        train_set = np.array(bowMatrixTrain.loc[:, bowMatrixTrain.columns != 'Perf_Encoded']).reshape(
+            bowMatrixTrain.loc[:, bowMatrixTrain.columns != 'Perf_Encoded'].shape)
+        train_labels = np.array(bowMatrixTrain['Perf_Encoded'])
+
+        test_set = np.array(bowMatrixTest.loc[:, bowMatrixTest.columns != 'Perf_Encoded']).reshape(
+            bowMatrixTest.loc[:, bowMatrixTest.columns != 'Perf_Encoded'].shape)
+        test_labels = np.array(bowMatrixTest['Perf_Encoded'])
+
+        # Statistiche su train e test
+
+        def sampleStats(dataset):
+            stats = list()
+            for diffRet in bowMatrixTrain['Perf_Encoded'].unique():
+                st = bowMatrixTrain['Perf_Encoded'][bowMatrixTrain['Perf_Encoded'] == diffRet].count()
+                stats.append(st)
+
+            stats = pd.DataFrame(stats)
+
+            # Converti in percentuali sul totale delle osservazioni
+
+            stats = (stats / len(bowMatrixTrain['Perf_Encoded'])) * 100
+
+            stats = (stats.set_index(pd.Series(['UP', 'DOWN', 'STRONG UP', 'STRONG DOWN']))).set_axis(['% frequency'],
+                                                                                                      axis=1)
+            return stats
+
+        print(sampleStats(bowMatrixTrain))
+        print(sampleStats(bowMatrixTest))
+
+        return [train_set, train_labels, test_set, test_labels]
+
+
 
 
 
