@@ -15,13 +15,13 @@ from sklearn.model_selection import train_test_split
 
 #massive = nl.MassiveNewsScaper()
 
-textList = pd.read_excel(r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\SingleStockNews1.xlsx")
+textList = pd.read_excel(r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\SingleStockNews1.xlsx")[0:1000]
 
 print(textList)
 
 cleanData = ns.PreProcessing(textList).preProcess(POS_tagging=False)
 
-BoWEmbedding = ns.Vectorize(cleanData).Embedding(method = 'Bag-of-word')
+BoWEmbedding = ns.Vectorize(cleanData).Embedding(method = "Word2Vec")
 
 modelSet = ns.Model(BoWEmbedding, testSize=0.40, epochs=3).NNProcessing()
 

@@ -172,46 +172,98 @@ class Vectorize:
 
     def Embedding (self, method = 'Bag-of-Word'):
 
-        import pandas as pd
+        if method == 'Bag-of-word':
 
-        # La lunghezza di ciascun vettore deve essere la lunghezza di allWords
+            import pandas as pd
 
-        print('Creating the BoW Matrix...')
+            # La lunghezza di ciascun vettore deve essere la lunghezza di allWords
 
-        allWords = pd.Series(self.processedData[1]).drop_duplicates().reset_index()
-        del [allWords['index']]
+            print('Creating the BoW Matrix...')
 
-        allWords = allWords.set_axis(['count'], axis=1)
+            allWords = pd.Series(self.processedData[1]).drop_duplicates().reset_index()
+            del [allWords['index']]
 
-        bowMatrix = list()
-        for sentenceN in range(0, len(self.processedData[0])):
-            f = allWords.merge(self.processedData[0][sentenceN], left_on='count', right_on='Tokens', how='left')
-            f = f[['count_x', 'count_y']].set_axis(['word', sentenceN], axis=1).fillna(0)
-            bowMatrix.append(f[sentenceN].astype(int))
+            allWords = allWords.set_axis(['count'], axis=1)
 
-        bowMatrix = pd.concat([series for series in bowMatrix], axis=1).transpose()
+            bowMatrix = list()
+            for sentenceN in range(0, len(self.processedData[0])):
+                f = allWords.merge(self.processedData[0][sentenceN], left_on='count', right_on='Tokens', how='left')
+                f = f[['count_x', 'count_y']].set_axis(['word', sentenceN], axis=1).fillna(0)
+                bowMatrix.append(f[sentenceN].astype(int))
 
-        stocks = pd.DataFrame(self.processedData[2]).set_axis(['Return_enc'], axis=1)
-        bowMatrix = pd.concat([bowMatrix, stocks], axis=1)
+            bowMatrix = pd.concat([series for series in bowMatrix], axis=1).transpose()
 
-        print('Number of Articles:', len(self.processedData[0]))
-        print(bowMatrix)
+            stocks = pd.DataFrame(self.processedData[2]).set_axis(['Return_enc'], axis=1)
+            bowMatrix = pd.concat([bowMatrix, stocks], axis=1)
 
-        # Ogni riga è un articolo, ogni colonna è la presenza di una parola in quell'articolo
-        # Ora possiamo costruire il modello fine a se stesso
+            print('Number of Articles:', len(self.processedData[0]))
+            print(bowMatrix)
 
-        # Encoding delle variabili categoriche
+            # Ogni riga è un articolo, ogni colonna è la presenza di una parola in quell'articolo
+            # Ora possiamo costruire il modello fine a se stesso
 
-        bowMatrix.loc[bowMatrix['Return_enc'] == 'UP', 'Perf_Encoded'] = 0
-        bowMatrix.loc[bowMatrix['Return_enc'] == 'DOWN', 'Perf_Encoded'] = 1
-        bowMatrix.loc[bowMatrix['Return_enc'] == 'STRONG UP', 'Perf_Encoded'] = 2
-        bowMatrix.loc[bowMatrix['Return_enc'] == 'STRONG DOWN', 'Perf_Encoded'] = 3
+            # Encoding delle variabili categoriche
 
-        del [bowMatrix['Return_enc']]
+            bowMatrix.loc[bowMatrix['Return_enc'] == 'UP', 'Perf_Encoded'] = 0
+            bowMatrix.loc[bowMatrix['Return_enc'] == 'DOWN', 'Perf_Encoded'] = 1
+            bowMatrix.loc[bowMatrix['Return_enc'] == 'STRONG UP', 'Perf_Encoded'] = 2
+            bowMatrix.loc[bowMatrix['Return_enc'] == 'STRONG DOWN', 'Perf_Encoded'] = 3
 
-        bowMatrix = bowMatrix.dropna()
+            del [bowMatrix['Return_enc']]
 
-        return bowMatrix
+            bowMatrix = bowMatrix.dropna()
+
+            return bowMatrix
+
+        if method == "Word2Vec":
+
+            import pandas as pd
+            from gensim.models import Word2Vec
+
+            print('Generating the W2V Model...')
+
+            w2VList = list()
+            for series in self.processedData[0]:
+                w2VList.append(list(series['Tokens']))
+
+            model = Word2Vec(sentences=w2VList, vector_size=10, window=5, min_count=1, workers=4)
+
+            modelEmbedding = list()
+            for sentence in w2VList:
+                embedding = model.wv[sentence]
+                modelEmbedding.append((embedding))
+
+            # Preparazione del database, padding per adattarsi alla lunghezza variabile
+
+            DataPad = list()
+            for sentence in modelEmbedding:
+                flat = sentence.flatten()
+                DataPad.append(pd.DataFrame(flat).transpose())
+
+            DataPad = pd.concat([series for series in DataPad], axis=0).fillna(0).reset_index()
+            del [DataPad['index']]
+
+            stocks = pd.DataFrame(self.processedData[2]).set_axis(['Return_enc'], axis=1)
+            W2V = pd.concat([DataPad, stocks], axis=1)
+
+            print('Number of Articles:', len(self.processedData[0]))
+            print(W2V)
+
+            # Ogni riga è un articolo, ogni colonna è la presenza di una parola in quell'articolo
+            # Ora possiamo costruire il modello fine a se stesso
+
+            # Encoding delle variabili categoriche
+
+            W2V.loc[W2V['Return_enc'] == 'UP', 'Perf_Encoded'] = 0
+            W2V.loc[W2V['Return_enc'] == 'DOWN', 'Perf_Encoded'] = 1
+            W2V.loc[W2V['Return_enc'] == 'STRONG UP', 'Perf_Encoded'] = 2
+            W2V.loc[W2V['Return_enc'] == 'STRONG DOWN', 'Perf_Encoded'] = 3
+
+            del [W2V['Return_enc']]
+
+            W2V = W2V.dropna()
+
+            return W2V
 
 
 class Model:
