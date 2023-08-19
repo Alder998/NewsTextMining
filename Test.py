@@ -23,7 +23,5 @@ cleanData = ns.PreProcessing(textList).preProcess(POS_tagging=False)
 
 BoWEmbedding = ns.Vectorize(cleanData).Embedding(method = 'Bag-of-word')
 
-modelSet = ns.Model(BoWEmbedding, testSize=0.40).TrainTestSplit()
-
-print(BoWEmbedding)
+modelSet = ns.Model(BoWEmbedding, testSize=0.40, epochs=3).NNProcessing()
 

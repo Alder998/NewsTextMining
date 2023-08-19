@@ -217,9 +217,10 @@ class Vectorize:
 class Model:
     name = "Text Modelling"
 
-    def __init__(self, textEmbedding, testSize):
+    def __init__(self, textEmbedding, testSize, epochs):
         self.textEmbedding = textEmbedding
         self.testSize = testSize
+        self.epochs = epochs
         pass
 
     def TrainTestSplit (self):
@@ -251,17 +252,17 @@ class Model:
 
         # Statistiche su train e test
 
-        def sampleStats(dataset):
+        def sampleStats (dataset):
             stats = list()
-            for diffRet in bowMatrixTrain['Perf_Encoded'].unique():
-                st = bowMatrixTrain['Perf_Encoded'][bowMatrixTrain['Perf_Encoded'] == diffRet].count()
+            for diffRet in dataset['Perf_Encoded'].unique():
+                st = dataset['Perf_Encoded'][dataset['Perf_Encoded'] == diffRet].count()
                 stats.append(st)
 
             stats = pd.DataFrame(stats)
 
             # Converti in percentuali sul totale delle osservazioni
 
-            stats = (stats / len(bowMatrixTrain['Perf_Encoded'])) * 100
+            stats = (stats / len(dataset['Perf_Encoded'])) * 100
 
             stats = (stats.set_index(pd.Series(['UP', 'DOWN', 'STRONG UP', 'STRONG DOWN']))).set_axis(['% frequency'],
                                                                                                       axis=1)
@@ -271,6 +272,65 @@ class Model:
         print(sampleStats(bowMatrixTest))
 
         return [train_set, train_labels, test_set, test_labels]
+
+
+    def NNProcessing (self):
+
+        import tensorflow as tf
+        import numpy as np
+        import pandas as pd
+
+        base = self.TrainTestSplit()
+
+        train_set = base[0]
+        train_labels = base[1]
+        test_set = base[2]
+        test_labels = base[3]
+
+        # Definizione del modello
+
+        model = tf.keras.Sequential([
+            tf.keras.layers.Flatten(input_shape=train_set[0].shape),
+
+            tf.keras.layers.Dense(200, activation='relu'),
+            tf.keras.layers.Dense(200, activation='relu'),
+            tf.keras.layers.Dense(200, activation='relu'),
+
+            tf.keras.layers.Dense(len(self.textEmbedding['Perf_Encoded'].unique()))
+        ])
+
+        # Definizione dei macroparametri
+
+        model.compile(optimizer='adam',
+                      loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                      metrics=['accuracy'])
+
+        # Fitting del modello
+
+        model.fit(train_set, train_labels, epochs=self.epochs, batch_size=len(self.textEmbedding['Perf_Encoded'].unique()))
+
+        # Prediction sui dati di test
+
+        probability_model = tf.keras.Sequential([model,
+                                                 tf.keras.layers.Softmax()])
+
+        predictions = probability_model.predict(test_set)
+
+        # Visualizziamo le predictions
+
+        predList = list()
+        for value in range(len(predictions)):
+            predTest = np.argmax(predictions[value])
+            predList.append(predTest)
+
+        predList = pd.Series(predList)
+
+        loss, accuracy = model.evaluate(test_set, test_labels)
+
+        print('\n')
+        print('Test Loss:', loss)
+        print('Test Accuracy:', accuracy * 100, '%')
+
 
 
 
