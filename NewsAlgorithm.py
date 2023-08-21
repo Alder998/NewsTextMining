@@ -215,6 +215,160 @@ class Vectorize:
 
             return bowMatrix
 
+        if method == 'AR-Reduced Bag-of-word':
+
+            import pandas as pd
+
+            # La lunghezza di ciascun vettore deve essere la lunghezza di allWords
+
+            print('Creating the BoW Matrix...')
+
+            allWords = pd.Series(self.processedData[1]).drop_duplicates().reset_index()
+            del [allWords['index']]
+
+            allWords = allWords.set_axis(['count'], axis=1)
+
+            bowMatrix = list()
+            for sentenceN in range(0, len(self.processedData[0])):
+                f = allWords.merge(self.processedData[0][sentenceN], left_on='count', right_on='Tokens', how='left')
+                f = f[['count_x', 'count_y']].set_axis(['word', sentenceN], axis=1).fillna(0)
+                bowMatrix.append(f[sentenceN].astype(int))
+
+            bowMatrix = pd.concat([series for series in bowMatrix], axis=1).transpose()
+
+            stocks = pd.DataFrame(self.processedData[2]).set_axis(['Return_enc'], axis=1)
+            bowMatrix = pd.concat([bowMatrix, stocks], axis=1)
+
+            print('Number of Articles:', len(self.processedData[0]))
+            print(bowMatrix)
+
+            # Ogni riga è un articolo, ogni colonna è la presenza di una parola in quell'articolo
+            # Ora possiamo costruire il modello fine a se stesso
+
+            # Encoding delle variabili categoriche
+
+            bowMatrix.loc[bowMatrix['Return_enc'] == 'UP', 'Perf_Encoded'] = 0
+            bowMatrix.loc[bowMatrix['Return_enc'] == 'DOWN', 'Perf_Encoded'] = 1
+            bowMatrix.loc[bowMatrix['Return_enc'] == 'STRONG UP', 'Perf_Encoded'] = 2
+            bowMatrix.loc[bowMatrix['Return_enc'] == 'STRONG DOWN', 'Perf_Encoded'] = 3
+
+            del [bowMatrix['Return_enc']]
+
+            bowMatrix = bowMatrix.dropna()
+
+            # Metodi per generare la matrice e ridurla
+
+            def AutoregressiveProcess(coefficient=0.5, data_length=10000, prediction_length=50, lags=10):
+
+                import numpy as np
+                import statsmodels.api as sm
+                from statsmodels.tsa.ar_model import AutoReg
+                import pandas as pd
+
+                # AR(1) parameters
+                ar_coefficient = coefficient
+                data_length = data_length
+
+                # Generate the random noise
+                np.random.seed(0)
+                error = np.random.normal(loc=0, scale=1, size=data_length)
+
+                # Create an empty array to hold the AR data
+                ar_data = np.zeros(data_length)
+
+                # Generate the AR process
+                for i in range(1, data_length):
+                    ar_data[i] = ar_coefficient * ar_data[i - 1] + error[i]
+
+                # Fit the AR model
+                model = AutoReg(ar_data, lags=[lags])
+                ar_model = model.fit()
+
+                prediction = np.abs(ar_model.forecast(steps=prediction_length))
+
+                return prediction
+
+            def generateARBoWMatrix(BoWMatrix):
+
+                import numpy as np
+
+                AREmb = list()
+                for column in BoWMatrix.columns:
+
+                    occurence = list(BoWMatrix[(BoWMatrix[column] == 0.8) | (BoWMatrix[column] == 1)].index)
+
+                    if len(occurence) > 0:
+
+                        data_length = len(BoWMatrix[0])
+
+                        occurenceS = [occurence[0]]
+
+                        for value in pd.Series(occurence).diff().dropna():
+                            occurenceS.append(value)
+
+                        lastEvent = max((data_length) - (np.array(occurenceS).sum()), 0)
+
+                        if lastEvent != 0:
+                            occurenceS.append(lastEvent)
+
+                        occurenceS = list(pd.Series(occurenceS).astype(int))
+
+                        # print(occurenceS)
+
+                        l = list()
+                        for ev in range(len(occurenceS)):
+                            arP = AutoregressiveProcess(coefficient=0.5, prediction_length=occurenceS[ev], lags=3)
+                            l.append(pd.DataFrame(arP))
+
+                        l = pd.concat([series for series in l], axis=0).reset_index()
+
+                        del [l['index']]
+
+                        AREmb.append(l)
+
+                        print('Encoding a AR-BoW Matrix: Progress:', round((column / len(BoWMatrix.columns)) * 100, 2),
+                              '%')
+
+                AREmb = pd.concat([series for series in AREmb], axis=1).dropna().transpose().reset_index()
+                del [AREmb['index']]
+
+                return AREmb
+
+            bowMatrixAR = bowMatrix.loc[:, bowMatrix.columns != 'Return_enc'].transpose()
+
+            ARBoWMatrix = generateARBoWMatrix(bowMatrixAR)
+
+            ARBoWMatrix = pd.concat([ARBoWMatrix, bowMatrix['Return_enc']], axis=1)
+
+            # riduciamo la matrice con una PCA
+
+            # trasporta in formato matrice, ed isola la colonna dei rendimenti
+
+            retS = ARBoWMatrix['Perf_Encoded']
+
+            ARBoWMatrix = ARBoWMatrix.loc[:, ARBoWMatrix.columns != 'Perf_Encoded']
+
+            ARBoWMatrix = np.array(ARBoWMatrix)
+
+            # Standardizza i dati
+            scaler = StandardScaler()
+            ARBoWMatrix_scaled = scaler.fit_transform(ARBoWMatrix)
+
+            # Specifica il numero di componenti desiderate
+            n_components = 5
+
+            # Applica la PCA
+            pca = PCA(n_components=n_components)
+            ARBoWMatrix_reduced = pca.fit_transform(ARBoWMatrix_scaled)
+
+            ARBoWMatrix = pd.concat([pd.DataFrame(ARBoWMatrix_reduced), retS], axis=1)
+
+            ARBoWMatrix = ARBoWMatrix.dropna()
+
+            print('\n')
+
+            return ARBoWMatrix
+
         if method == "Word2Vec":
 
             import pandas as pd
