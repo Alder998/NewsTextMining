@@ -12,6 +12,9 @@
 # - Modelling: Experiment different supervised and non supervised models to get the best accuracy for text
 # Classification
 # - Performance Testing: Compare the models' different performances.
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
 
 class PreProcessing:
     name = "Text Pre-Processing"
@@ -218,6 +221,7 @@ class Vectorize:
         if method == 'AR-Reduced Bag-of-word':
 
             import pandas as pd
+            import numpy as np
 
             # La lunghezza di ciascun vettore deve essere la lunghezza di allWords
 
@@ -229,12 +233,12 @@ class Vectorize:
             allWords = allWords.set_axis(['count'], axis=1)
 
             bowMatrix = list()
-            for sentenceN in range(0, len(self.processedData[0])):
-                f = allWords.merge(self.processedData[0][sentenceN], left_on='count', right_on='Tokens', how='left')
-                f = f[['count_x', 'count_y']].set_axis(['word', sentenceN], axis=1).fillna(0)
-                bowMatrix.append(f[sentenceN].astype(int))
+            for sentenceN in range(0, len(self.processedData[3])):
+                f = allWords.merge(self.processedData[3][sentenceN], left_on='count', right_on='word', how='left')
+                f = f[['POS']].set_axis([sentenceN], axis=1).fillna(0)
+                bowMatrix.append(f[sentenceN])
 
-            bowMatrix = pd.concat([series for series in bowMatrix], axis=1).transpose()
+            bowMatrix = pd.concat([series for series in bowMatrix], axis=1).dropna().transpose()
 
             stocks = pd.DataFrame(self.processedData[2]).set_axis(['Return_enc'], axis=1)
             bowMatrix = pd.concat([bowMatrix, stocks], axis=1)
@@ -290,8 +294,6 @@ class Vectorize:
 
             def generateARBoWMatrix(BoWMatrix):
 
-                import numpy as np
-
                 AREmb = list()
                 for column in BoWMatrix.columns:
 
@@ -303,7 +305,7 @@ class Vectorize:
 
                         occurenceS = [occurence[0]]
 
-                        for value in pd.Series(occurence).diff().dropna():
+                        for value in pd.Series(occurence).astype(float).diff().dropna():
                             occurenceS.append(value)
 
                         lastEvent = max((data_length) - (np.array(occurenceS).sum()), 0)
@@ -334,15 +336,17 @@ class Vectorize:
 
                 return AREmb
 
-            bowMatrixAR = bowMatrix.loc[:, bowMatrix.columns != 'Return_enc'].transpose()
+            bowMatrixAR = bowMatrix.loc[:, bowMatrix.columns != 'Perf_Encoded'].transpose()
 
             ARBoWMatrix = generateARBoWMatrix(bowMatrixAR)
 
-            ARBoWMatrix = pd.concat([ARBoWMatrix, bowMatrix['Return_enc']], axis=1)
+            ARBoWMatrix = pd.concat([ARBoWMatrix, bowMatrix['Perf_Encoded']], axis=1)
 
             # riduciamo la matrice con una PCA
 
             # trasporta in formato matrice, ed isola la colonna dei rendimenti
+
+            ARBoWMatrix = ARBoWMatrix.dropna()
 
             retS = ARBoWMatrix['Perf_Encoded']
 
