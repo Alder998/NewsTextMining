@@ -441,7 +441,8 @@ class Model:
 
         # dividi in train e test set
 
-        df = train_test_split(self.textEmbedding, test_size=self.testSize)
+        df = train_test_split(self.textEmbedding, test_size=self.testSize, stratify=self.textEmbedding['Perf_Encoded'],
+                              random_state=42)
 
         bowMatrixTrain = df[0]
         bowMatrixTest = df[1]
