@@ -175,7 +175,7 @@ class Vectorize:
 
     def Embedding (self, method = 'Bag-of-Word'):
 
-        if method == 'Bag-of-word':
+        if method == 'Bag-of-Word':
 
             import pandas as pd
 
@@ -384,7 +384,7 @@ class Vectorize:
             for series in self.processedData[0]:
                 w2VList.append(list(series['Tokens']))
 
-            model = Word2Vec(sentences=w2VList, vector_size=10, window=5, min_count=1, workers=4)
+            model = Word2Vec(sentences=w2VList, vector_size=15, window=5, min_count=1, workers=4)
 
             modelEmbedding = list()
             for sentence in w2VList:

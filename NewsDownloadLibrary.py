@@ -259,7 +259,7 @@ def MassiveNewsScaper(numberOfRandomStocks=50, source='Bing', update_returns=Fal
 
         rightClose = list()
         for iterat, ticker in enumerate(stockIndex):
-            history = (yf.Ticker(ticker).history('2mo')['Close'].pct_change() * 100).dropna().reset_index()
+            history = (yf.Ticker(ticker).history('1Y')['Close'].pct_change() * 100).dropna().reset_index()
 
             if history['Date'].empty == False:
                 history['Date'] = history['Date'].dt.strftime('%Y.%m.%d')
