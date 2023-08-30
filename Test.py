@@ -15,7 +15,7 @@ from sklearn.model_selection import train_test_split
 
 #massive = nl.MassiveNewsScaper()
 
-textList = pd.read_excel(r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\SingleStockNews1.xlsx")[0:1000]
+textList = pd.read_excel(r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\SingleStockNews1.xlsx")#[0:1000]
 
 print(textList)
 

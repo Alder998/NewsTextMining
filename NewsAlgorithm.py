@@ -465,7 +465,7 @@ class Model:
 
         def sampleStats (dataset):
             stats = list()
-            for diffRet in dataset['Perf_Encoded'].unique():
+            for diffRet in dataset['Perf_Encoded'].sort_values().unique():
                 st = dataset['Perf_Encoded'][dataset['Perf_Encoded'] == diffRet].count()
                 stats.append(st)
 
