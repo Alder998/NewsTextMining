@@ -19,8 +19,9 @@ from sklearn.preprocessing import StandardScaler
 class PreProcessing:
     name = "Text Pre-Processing"
 
-    def __init__(self, textList):
+    def __init__(self, textList, target):
         self.textList = textList
+        self.target = target
         pass
 
     # Different methods to get different News
@@ -49,10 +50,17 @@ class PreProcessing:
 
         # Encoding dei rendimenti
 
-        stockNews.loc[stockNews['Same-Day Close'] > 0, 'Return_enc'] = 'UP'
-        stockNews.loc[stockNews['Same-Day Close'] < 0, 'Return_enc'] = 'DOWN'
-        stockNews.loc[stockNews['Same-Day Close'] > 2, 'Return_enc'] = 'STRONG UP'
-        stockNews.loc[stockNews['Same-Day Close'] < -2, 'Return_enc'] = 'STRONG DOWN'
+        if self.target == 'returns':
+             stockNews.loc[stockNews['Same-Day Close'] > 0, 'Return_enc'] = 'UP'
+             stockNews.loc[stockNews['Same-Day Close'] < 0, 'Return_enc'] = 'DOWN'
+             stockNews.loc[stockNews['Same-Day Close'] > 2, 'Return_enc'] = 'STRONG UP'
+             stockNews.loc[stockNews['Same-Day Close'] < -2, 'Return_enc'] = 'STRONG DOWN'
+
+        if self.target == 'volume':
+             stockNews.loc[stockNews['Same-Day Volume'] > 0, 'Return_enc'] = 'UP'
+             stockNews.loc[stockNews['Same-Day Volume'] < 0, 'Return_enc'] = 'DOWN'
+             stockNews.loc[stockNews['Same-Day Volume'] > 20, 'Return_enc'] = 'STRONG UP'
+             stockNews.loc[stockNews['Same-Day Volume'] < -20, 'Return_enc'] = 'STRONG DOWN'
 
         # Filtriamo per le sole notizie in inglese
 
@@ -541,6 +549,8 @@ class Model:
         print('\n')
         print('Test Loss:', loss)
         print('Test Accuracy:', accuracy * 100, '%')
+
+        return predList
 
 
 

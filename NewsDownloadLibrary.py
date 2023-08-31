@@ -259,7 +259,15 @@ def MassiveNewsScaper(numberOfRandomStocks=50, source='Bing', update_returns=Fal
 
         rightClose = list()
         for iterat, ticker in enumerate(stockIndex):
-            history = (yf.Ticker(ticker).history('1Y')['Close'].pct_change() * 100).dropna().reset_index()
+
+            try:
+                history = (yf.Ticker(ticker).history('1Y')['Close'].pct_change()*100).dropna().reset_index()
+            except TypeError as e:
+                if "unsupported operand type(s) for |: 'dict' and 'dict'" in str(e):
+                    print(f" yfinance Error for {ticker}, Override...")
+                    continue
+                else:
+                    raise e # Se l'errore non è quello previsto, rilancia l'eccezione
 
             if history['Date'].empty == False:
                 history['Date'] = history['Date'].dt.strftime('%Y.%m.%d')
@@ -271,11 +279,40 @@ def MassiveNewsScaper(numberOfRandomStocks=50, source='Bing', update_returns=Fal
                 print(source, ':', 'Updating Returns - Ticker:', ticker, ' - Progress:',
                       round(iterat / len(stockIndex) * 100), '%')
 
+
                 clear_output(wait=True)
 
         rightClose = pd.concat([series for series in rightClose], axis=0)
 
         newDataset = data.merge(rightClose, on=['Stock', 'Date'])
+
+        # Volume
+
+        rightVolume = list()
+        for iterat, ticker in enumerate(stockIndex):
+
+            try:
+                history = (yf.Ticker(ticker).history('1Y')['Volume'].pct_change() * 100).dropna().reset_index()
+            except TypeError as e:
+                if "unsupported operand type(s) for |: 'dict' and 'dict'" in str(e):
+                    print(f" yfinance Error for {ticker}, Override...")
+                    continue
+                else:
+                    raise e  # Se l'errore non è quello previsto, rilancia l'eccezione
+
+            if history['Date'].empty == False:
+                history['Date'] = history['Date'].dt.strftime('%Y.%m.%d')
+                history = pd.concat([pd.Series(np.full(len(history['Date']), ticker)), history], axis=1).set_axis(
+                    ['Stock', 'Date',
+                     'Same-Day Volume'], axis=1)
+                rightVolume.append(history)
+
+                print(source, ':', 'Updating Volumes - Ticker:', ticker, ' - Progress:',
+                      round(iterat / len(stockIndex) * 100), '%')
+
+        rightVolume = pd.concat([series for series in rightVolume], axis=0)
+
+        newDataset = data.merge(rightVolume, on=['Stock', 'Date'])
 
         newDataset.to_excel(
             r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\SingleStockNews1.xlsx")
