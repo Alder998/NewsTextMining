@@ -312,7 +312,7 @@ def MassiveNewsScaper(numberOfRandomStocks=50, source='Bing', update_returns=Fal
 
         rightVolume = pd.concat([series for series in rightVolume], axis=0)
 
-        newDataset = data.merge(rightVolume, on=['Stock', 'Date'])
+        newDataset = newDataset.merge(rightVolume, on = ['Stock', 'Date'])
 
         newDataset.to_excel(
             r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text Mining & Sentiment Analysis\Stock Market News\finalDataSet\SingleStockNews1.xlsx")

@@ -19,9 +19,9 @@ textList = pd.read_excel(r"C:\Users\39328\OneDrive\Desktop\Davide\Velleità\Text
 
 print(textList)
 
-cleanData = ns.PreProcessing(textList, target='volume').preProcess(POS_tagging=True)
+cleanData = ns.PreProcessing(textList, target='returns', threshold=3).preProcess(POS_tagging=True)
 
-BoWEmbedding = ns.Vectorize(cleanData).Embedding(method = 'AR-Reduced Bag-of-word')
+BoWEmbedding = ns.Vectorize(cleanData).Embedding(method = 'Bag-of-Word')
 
-modelSet = ns.Model(BoWEmbedding, testSize=0.20, epochs=20).NNProcessing()
+modelSet = ns.Model(BoWEmbedding, testSize=0.20, epochs=6).NNProcessing()
 

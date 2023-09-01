@@ -19,9 +19,10 @@ from sklearn.preprocessing import StandardScaler
 class PreProcessing:
     name = "Text Pre-Processing"
 
-    def __init__(self, textList, target):
+    def __init__(self, textList, target, threshold):
         self.textList = textList
         self.target = target
+        self.threshold = threshold
         pass
 
     # Different methods to get different News
@@ -53,14 +54,18 @@ class PreProcessing:
         if self.target == 'returns':
              stockNews.loc[stockNews['Same-Day Close'] > 0, 'Return_enc'] = 'UP'
              stockNews.loc[stockNews['Same-Day Close'] < 0, 'Return_enc'] = 'DOWN'
-             stockNews.loc[stockNews['Same-Day Close'] > 2, 'Return_enc'] = 'STRONG UP'
-             stockNews.loc[stockNews['Same-Day Close'] < -2, 'Return_enc'] = 'STRONG DOWN'
+             stockNews.loc[stockNews['Same-Day Close'] > self.threshold, 'Return_enc'] = 'STRONG UP'
+             stockNews.loc[stockNews['Same-Day Close'] < - (self.threshold), 'Return_enc'] = 'STRONG DOWN'
+
+             del[stockNews['Same-Day Volume']]
 
         if self.target == 'volume':
              stockNews.loc[stockNews['Same-Day Volume'] > 0, 'Return_enc'] = 'UP'
              stockNews.loc[stockNews['Same-Day Volume'] < 0, 'Return_enc'] = 'DOWN'
-             stockNews.loc[stockNews['Same-Day Volume'] > 20, 'Return_enc'] = 'STRONG UP'
-             stockNews.loc[stockNews['Same-Day Volume'] < -20, 'Return_enc'] = 'STRONG DOWN'
+             stockNews.loc[stockNews['Same-Day Volume'] > self.threshold, 'Return_enc'] = 'STRONG UP'
+             stockNews.loc[stockNews['Same-Day Volume'] < - (self.threshold), 'Return_enc'] = 'STRONG DOWN'
+
+             del[stockNews['Same-Day Close']]
 
         # Filtriamo per le sole notizie in inglese
 
