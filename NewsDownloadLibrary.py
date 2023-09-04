@@ -176,31 +176,31 @@ def getSingleStockMarketNews(stockIndex, source='Bing'):
 
     # print(finalDF)
 
-    # Prendiamo il rendimento dello stock mirato
+        # Prendiamo il rendimento dello stock mirato
 
-    marketTrend = list()
-    for iterat, ticker in enumerate(stockIndex):
+        # marketTrend = list()
+        # for iterat, ticker in enumerate(stockIndex):
 
-        if yf.Ticker(ticker).history('1d').empty == False:
-            history = (yf.Ticker(ticker).history('7d')['Close'].pct_change() * 100).reset_index()
+        #    if yf.Ticker(ticker).history('1d').empty == False:
+        #        history = (yf.Ticker(ticker).history('7d')['Close'].pct_change()*100).reset_index()
+        #
+        #        retHist = history['Close'][len(history['Close']) - 1]
+        #        dateHist = pd.to_datetime(history['Date'][len(history['Close']) - 1]).strftime('%Y.%m.%d')
+        #
+        #        mt = pd.concat([pd.Series(retHist), pd.Series(ticker)], axis = 1).set_axis(['Return', 'Stock'], axis = 1)
+        #
+        #        print(source, ':', 'Stock Performance Gathering (2 out of 2) - Ticker:', ticker, ' - Progress:',
+        #              round(iterat/len(stockIndex) * 100), '%')
+        #
+        #        marketTrend.append(mt)
+        #
+        #    clear_output(wait = True)
+        #
+        # marketTrend = pd.concat([series for series in marketTrend], axis = 0)
+        #
+        # SingleStockData = finalDF.merge(marketTrend, on = 'Stock')
 
-            retHist = history['Close'][len(history['Close']) - 1]
-            dateHist = pd.to_datetime(history['Date'][len(history['Close']) - 1]).strftime('%Y.%m.%d')
-
-            mt = pd.concat([pd.Series(retHist), pd.Series(ticker)], axis=1).set_axis(['Return', 'Stock'], axis=1)
-
-            print('Stock Performance Gathering (2 out of 2) - Ticker:', ticker, ' - Progress:',
-                  round(iterat / len(stockIndex) * 100), '%')
-
-            marketTrend.append(mt)
-
-        clear_output(wait=True)
-
-    marketTrend = pd.concat([series for series in marketTrend], axis=0)
-
-    SingleStockData = finalDF.merge(marketTrend, on='Stock')
-
-    return SingleStockData
+        return finalDF  # SingleStockData
 
 
 def MassiveNewsScaper(numberOfRandomStocks=50, source='Bing', update_returns=False):
