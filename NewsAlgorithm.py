@@ -498,7 +498,7 @@ class Model:
         return [train_set, train_labels, test_set, test_labels]
 
 
-    def NNProcessing (self):
+    def NNProcessing (self, shape = [200, 200, 200], activation = 'relu'):
 
         import tensorflow as tf
         import numpy as np
@@ -511,19 +511,24 @@ class Model:
         test_set = base[2]
         test_labels = base[3]
 
-        # Definizione del modello
+        # Definizione del modello - proviamo a rendere gli Input settabili dall'utente
 
-        model = tf.keras.Sequential([
-            tf.keras.layers.Flatten(input_shape=train_set[0].shape),
-
-            tf.keras.layers.Dense(200, activation='relu'),
-            tf.keras.layers.Dense(200, activation='relu'),
-            tf.keras.layers.Dense(200, activation='relu'),
-
-            tf.keras.layers.Dense(len(self.textEmbedding['Perf_Encoded'].unique()))
-        ])
+        model = tf.keras.Sequential()
 
         # Definizione dei macroparametri
+
+        # il primo Layer schiaccia la matrice e la rende utilizzabile per la rete: è quindi uguale per tutti
+
+        model.add(tf.keras.layers.Flatten(input_shape=train_set[0].shape))
+
+        # Setta il numero di Layer intermedio
+
+        for sizeDIm in shape:
+            model.add(tf.keras.layers.Dense(sizeDIm, activation=activation))
+
+        # Aggiungi il layer SoftMax che rende l'output categorico
+
+        model.add(tf.keras.layers.Dense(len(self.textEmbedding['Perf_Encoded'].unique())))
 
         model.compile(optimizer='adam',
                       loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),

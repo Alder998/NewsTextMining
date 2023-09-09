@@ -23,5 +23,6 @@ cleanData = ns.PreProcessing(textList, target='returns', threshold=3).preProcess
 
 BoWEmbedding = ns.Vectorize(cleanData).Embedding(method = 'Bag-of-Word')
 
-modelSet = ns.Model(BoWEmbedding, testSize=0.20, epochs=6).NNProcessing()
+modelSet = ns.Model(BoWEmbedding, testSize=0.20, epochs=6).NNProcessing(shape = [200, 200, 200],
+                                                                        activation = 'tanh')
 
