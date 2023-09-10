@@ -186,7 +186,7 @@ class Vectorize:
         self.processedData = processedData
         pass
 
-    def Embedding (self, method = 'Bag-of-Word'):
+    def Embedding (self, method = 'Bag-of-Word', vectorSize = 1000):
 
         if method == 'Bag-of-Word':
 
@@ -397,7 +397,7 @@ class Vectorize:
             for series in self.processedData[0]:
                 w2VList.append(list(series['Tokens']))
 
-            model = Word2Vec(sentences=w2VList, vector_size=15, window=5, min_count=1, workers=4)
+            model = Word2Vec(sentences=w2VList, vector_size=vectorSize, window=5, min_count=1, workers=4)
 
             modelEmbedding = list()
             for sentence in w2VList:
@@ -498,7 +498,7 @@ class Model:
         return [train_set, train_labels, test_set, test_labels]
 
 
-    def NNProcessing (self, shape = [200, 200, 200], activation = 'relu'):
+    def NNProcessing (self, NNType = 'FF', shape = [200, 200, 200], shapeRec = [64], activation = 'relu'):
 
         import tensorflow as tf
         import numpy as np
@@ -511,56 +511,116 @@ class Model:
         test_set = base[2]
         test_labels = base[3]
 
-        # Definizione del modello - proviamo a rendere gli Input settabili dall'utente
+        if NNType == 'FF':
 
-        model = tf.keras.Sequential()
+            # Definizione del modello - proviamo a rendere gli Input settabili dall'utente
 
-        # Definizione dei macroparametri
+            model = tf.keras.Sequential()
 
-        # il primo Layer schiaccia la matrice e la rende utilizzabile per la rete: è quindi uguale per tutti
+            # Definizione dei macroparametri
 
-        model.add(tf.keras.layers.Flatten(input_shape=train_set[0].shape))
+            # il primo Layer schiaccia la matrice e la rende utilizzabile per la rete: è quindi uguale per tutti
 
-        # Setta il numero di Layer intermedio
+            model.add(tf.keras.layers.Flatten(input_shape=train_set[0].shape))
 
-        for sizeDIm in shape:
-            model.add(tf.keras.layers.Dense(sizeDIm, activation=activation))
+            # Setta il numero di Layer intermedio
 
-        # Aggiungi il layer SoftMax che rende l'output categorico
+            for sizeDIm in shape:
+                model.add(tf.keras.layers.Dense(sizeDIm, activation=activation))
 
-        model.add(tf.keras.layers.Dense(len(self.textEmbedding['Perf_Encoded'].unique())))
+            # Aggiungi il layer SoftMax che rende l'output categorico
 
-        model.compile(optimizer='adam',
-                      loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-                      metrics=['accuracy'])
+            model.add(tf.keras.layers.Dense(len(self.textEmbedding['Perf_Encoded'].unique())))
 
-        # Fitting del modello
+            model.compile(optimizer='adam',
+                          loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                          metrics=['accuracy'])
 
-        model.fit(train_set, train_labels, epochs=self.epochs, batch_size=len(self.textEmbedding['Perf_Encoded'].unique()))
+            # Fitting del modello
 
-        # Prediction sui dati di test
+            model.fit(train_set, train_labels, epochs=self.epochs, batch_size=len(self.textEmbedding['Perf_Encoded'].unique()))
 
-        probability_model = tf.keras.Sequential([model,
-                                                 tf.keras.layers.Softmax()])
+            # Prediction sui dati di test
 
-        predictions = probability_model.predict(test_set)
+            probability_model = tf.keras.Sequential([model,
+                                                     tf.keras.layers.Softmax()])
 
-        # Visualizziamo le predictions
+            predictions = probability_model.predict(test_set)
 
-        predList = list()
-        for value in range(len(predictions)):
-            predTest = np.argmax(predictions[value])
-            predList.append(predTest)
+            # Visualizziamo le predictions
 
-        predList = pd.Series(predList)
+            predList = list()
+            for value in range(len(predictions)):
+                predTest = np.argmax(predictions[value])
+                predList.append(predTest)
 
-        loss, accuracy = model.evaluate(test_set, test_labels)
+            predList = pd.Series(predList)
 
-        print('\n')
-        print('Test Loss:', loss)
-        print('Test Accuracy:', accuracy * 100, '%')
+            loss, accuracy = model.evaluate(test_set, test_labels)
 
-        return predList
+            print('\n')
+            print('Test Loss:', loss)
+            print('Test Accuracy:', accuracy * 100, '%')
+
+            return predList
+
+        if NNType == 'recurrent':
+
+            print(test_set.shape)
+
+            # Creazione di un modello Recurrent LSTM
+
+            model = tf.keras.Sequential()
+
+            # Definizione dei macroparametri
+
+            # Imposta il numero di Layer ricorrenti
+            for sizeDimR in shapeRec:
+                model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(sizeDimR, return_sequences=True),
+                                                        input_shape=(3600, 1)))
+
+            # Setta il numero di Layer di tipo FF
+            for sizeDim in shape:
+                model.add(tf.keras.layers.Dense(sizeDim, activation=activation))
+
+            # Aggiungi il layer SoftMax che rende l'output categorico
+
+            model.add(tf.keras.layers.Dense(len(self.textEmbedding['Perf_Encoded'].unique())))
+
+            model.compile(optimizer='adam',
+                          loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                          metrics=['accuracy'])
+
+            # Fitting del modello
+            model.fit(train_set, train_labels, epochs=self.epochs,
+                      batch_size=len(self.textEmbedding['Perf_Encoded'].unique()))
+
+            # Prediction sui dati di test
+
+            probability_model = tf.keras.Sequential([model,
+                                                     tf.keras.layers.Softmax()])
+
+            predictions = probability_model.predict(test_set)
+
+            # Visualizziamo le predictions
+
+            predList = list()
+            for value in range(len(predictions)):
+                predTest = np.argmax(predictions[value])
+                predList.append(predTest)
+
+            predList = pd.Series(predList)
+
+            loss, accuracy = model.evaluate(test_set, test_labels)
+
+            print('\n')
+            print('Test Loss:', loss)
+            print('Test Accuracy:', accuracy * 100, '%')
+
+            return predList
+
+
+
 
 
 
