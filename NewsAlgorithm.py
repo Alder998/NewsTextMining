@@ -186,7 +186,7 @@ class Vectorize:
         self.processedData = processedData
         pass
 
-    def Embedding (self, method = 'Bag-of-Word', vectorSize = 1000):
+    def Embedding (self, method = 'Bag-of-Word', vectorSize = 1000, components = 5):
 
         if method == 'Bag-of-Word':
 
@@ -372,7 +372,7 @@ class Vectorize:
             ARBoWMatrix_scaled = scaler.fit_transform(ARBoWMatrix)
 
             # Specifica il numero di componenti desiderate
-            n_components = 5
+            n_components = components
 
             # Applica la PCA
             pca = PCA(n_components=n_components)
@@ -390,6 +390,7 @@ class Vectorize:
 
             import pandas as pd
             from gensim.models import Word2Vec
+            import numpy as np
 
             print('Generating the W2V Model...')
 

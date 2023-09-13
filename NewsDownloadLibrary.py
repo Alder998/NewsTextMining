@@ -258,7 +258,7 @@ def MassiveNewsScaper(numberOfRandomStocks=50, source='Bing', update_returns=Fal
         stockIndex = data['Stock'].unique()
 
         rightClose = list()
-        for iterat, ticker in enumerate(stockIndex):
+        for iterat, ticker in enumerate(data['Stock'].unique()):
 
             try:
                 history = (yf.Ticker(ticker).history('1Y')['Close'].pct_change()*100).dropna().reset_index()
@@ -289,7 +289,7 @@ def MassiveNewsScaper(numberOfRandomStocks=50, source='Bing', update_returns=Fal
         # Volume
 
         rightVolume = list()
-        for iterat, ticker in enumerate(stockIndex):
+        for iterat, ticker in enumerate(data['Stock'].unique()):
 
             try:
                 history = (yf.Ticker(ticker).history('1Y')['Volume'].pct_change() * 100).dropna().reset_index()
