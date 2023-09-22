@@ -567,6 +567,8 @@ class Model:
 
         if NNType == 'recurrent':
 
+            #test_set = test_set.reshape([94, 1570, 1])
+
             print(test_set.shape)
 
             # Creazione di un modello Recurrent LSTM
