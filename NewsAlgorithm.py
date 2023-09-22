@@ -567,9 +567,10 @@ class Model:
 
         if NNType == 'recurrent':
 
-            #test_set = test_set.reshape([94, 1570, 1])
+            seq_length = 1
+            embedded_data_3d = tf.reshape(train_set, (train_set.shape[0], train_set.shape[1], seq_length))
 
-            print(test_set.shape)
+            print(embedded_data_3d.shape)
 
             # Creazione di un modello Recurrent LSTM
 
@@ -578,9 +579,10 @@ class Model:
             # Definizione dei macroparametri
 
             # Imposta il numero di Layer ricorrenti
-            for sizeDimR in shapeRec:
-                model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(sizeDimR, return_sequences=True),
-                                                        input_shape=(3600, 1)))
+            for counter, sizeDimR in enumerate(shapeRec):
+                model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(sizeDimR, return_sequences=True)))
+                if counter == len(shapeRec) - 1:
+                    model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(sizeDimR, return_sequences=False)))
 
             # Setta il numero di Layer di tipo FF
             for sizeDim in shape:
@@ -595,7 +597,7 @@ class Model:
                           metrics=['accuracy'])
 
             # Fitting del modello
-            model.fit(train_set, train_labels, epochs=self.epochs,
+            model.fit(embedded_data_3d, train_labels, epochs=self.epochs,
                       batch_size=len(self.textEmbedding['Perf_Encoded'].unique()))
 
             # Prediction sui dati di test
