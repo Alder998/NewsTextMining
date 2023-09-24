@@ -570,8 +570,6 @@ class Model:
             seq_length = 1
             embedded_data_3d = tf.reshape(train_set, (train_set.shape[0], train_set.shape[1], seq_length))
 
-            print(embedded_data_3d.shape)
-
             # Creazione di un modello Recurrent LSTM
 
             model = tf.keras.Sequential()
