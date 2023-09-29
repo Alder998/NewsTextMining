@@ -19,9 +19,10 @@ from sklearn.preprocessing import StandardScaler
 class PreProcessing:
     name = "Text Pre-Processing"
 
-    def __init__(self, textList, target, threshold):
+    def __init__(self, textList, target, classes, threshold):
         self.textList = textList
         self.target = target
+        self.classes = classes
         self.threshold = threshold
         pass
 
@@ -51,21 +52,37 @@ class PreProcessing:
 
         # Encoding dei rendimenti
 
-        if self.target == 'returns':
-             stockNews.loc[stockNews['Same-Day Close'] > 0, 'Return_enc'] = 'UP'
-             stockNews.loc[stockNews['Same-Day Close'] < 0, 'Return_enc'] = 'DOWN'
-             stockNews.loc[stockNews['Same-Day Close'] > self.threshold, 'Return_enc'] = 'STRONG UP'
-             stockNews.loc[stockNews['Same-Day Close'] < - (self.threshold), 'Return_enc'] = 'STRONG DOWN'
+        if self.classes == 4:
+            if self.target == 'returns':
+                 stockNews.loc[stockNews['Same-Day Close'] > 0, 'Return_enc'] = 'UP'
+                 stockNews.loc[stockNews['Same-Day Close'] < 0, 'Return_enc'] = 'DOWN'
+                 stockNews.loc[stockNews['Same-Day Close'] > self.threshold, 'Return_enc'] = 'STRONG UP'
+                 stockNews.loc[stockNews['Same-Day Close'] < - (self.threshold), 'Return_enc'] = 'STRONG DOWN'
 
-             del[stockNews['Same-Day Volume']]
+                 del[stockNews['Same-Day Volume']]
 
-        if self.target == 'volume':
-             stockNews.loc[stockNews['Same-Day Volume'] > 0, 'Return_enc'] = 'UP'
-             stockNews.loc[stockNews['Same-Day Volume'] < 0, 'Return_enc'] = 'DOWN'
-             stockNews.loc[stockNews['Same-Day Volume'] > self.threshold, 'Return_enc'] = 'STRONG UP'
-             stockNews.loc[stockNews['Same-Day Volume'] < - (self.threshold), 'Return_enc'] = 'STRONG DOWN'
+            if self.target == 'volume':
+                 stockNews.loc[stockNews['Same-Day Volume'] > 0, 'Return_enc'] = 'UP'
+                 stockNews.loc[stockNews['Same-Day Volume'] < 0, 'Return_enc'] = 'DOWN'
+                 stockNews.loc[stockNews['Same-Day Volume'] > self.threshold, 'Return_enc'] = 'STRONG UP'
+                 stockNews.loc[stockNews['Same-Day Volume'] < - (self.threshold), 'Return_enc'] = 'STRONG DOWN'
 
-             del[stockNews['Same-Day Close']]
+                 del[stockNews['Same-Day Close']]
+
+        if self.classes == 2:
+
+            if self.target == 'returns':
+                stockNews.loc[stockNews['Same-Day Close'] > 0, 'Return_enc'] = 'UP'
+                stockNews.loc[stockNews['Same-Day Close'] < 0, 'Return_enc'] = 'DOWN'
+
+                del [stockNews['Same-Day Volume']]
+
+            if self.target == 'volume':
+                stockNews.loc[stockNews['Same-Day Volume'] > 0, 'Return_enc'] = 'UP'
+                stockNews.loc[stockNews['Same-Day Volume'] < 0, 'Return_enc'] = 'DOWN'
+
+                del [stockNews['Same-Day Close']]
+
 
         # Filtriamo per le sole notizie in inglese
 
@@ -220,10 +237,8 @@ class Vectorize:
 
             # Encoding delle variabili categoriche
 
-            bowMatrix.loc[bowMatrix['Return_enc'] == 'UP', 'Perf_Encoded'] = 0
-            bowMatrix.loc[bowMatrix['Return_enc'] == 'DOWN', 'Perf_Encoded'] = 1
-            bowMatrix.loc[bowMatrix['Return_enc'] == 'STRONG UP', 'Perf_Encoded'] = 2
-            bowMatrix.loc[bowMatrix['Return_enc'] == 'STRONG DOWN', 'Perf_Encoded'] = 3
+            for i, uniqueVar in enumerate(bowMatrix['Return_enc'].unique()):
+                bowMatrix.loc[bowMatrix['Return_enc'] == uniqueVar, 'Perf_Encoded'] = i
 
             del [bowMatrix['Return_enc']]
 
@@ -264,10 +279,8 @@ class Vectorize:
 
             # Encoding delle variabili categoriche
 
-            bowMatrix.loc[bowMatrix['Return_enc'] == 'UP', 'Perf_Encoded'] = 0
-            bowMatrix.loc[bowMatrix['Return_enc'] == 'DOWN', 'Perf_Encoded'] = 1
-            bowMatrix.loc[bowMatrix['Return_enc'] == 'STRONG UP', 'Perf_Encoded'] = 2
-            bowMatrix.loc[bowMatrix['Return_enc'] == 'STRONG DOWN', 'Perf_Encoded'] = 3
+            for i, uniqueVar in enumerate(bowMatrix['Return_enc'].unique()):
+                bowMatrix.loc[bowMatrix['Return_enc'] == uniqueVar, 'Perf_Encoded'] = i
 
             del [bowMatrix['Return_enc']]
 
@@ -426,10 +439,8 @@ class Vectorize:
 
             # Encoding delle variabili categoriche
 
-            W2V.loc[W2V['Return_enc'] == 'UP', 'Perf_Encoded'] = 0
-            W2V.loc[W2V['Return_enc'] == 'DOWN', 'Perf_Encoded'] = 1
-            W2V.loc[W2V['Return_enc'] == 'STRONG UP', 'Perf_Encoded'] = 2
-            W2V.loc[W2V['Return_enc'] == 'STRONG DOWN', 'Perf_Encoded'] = 3
+            for i, uniqueVar in enumerate(W2V['Return_enc'].unique()):
+                W2V.loc[W2V['Return_enc'] == uniqueVar, 'Perf_Encoded'] = i
 
             del [W2V['Return_enc']]
 
@@ -489,8 +500,8 @@ class Model:
 
             stats = (stats / len(dataset['Perf_Encoded'])) * 100
 
-            stats = (stats.set_index(pd.Series(['UP', 'DOWN', 'STRONG UP', 'STRONG DOWN']))).set_axis(['% frequency'],
-                                                                                                      axis=1)
+            stats = (stats.set_index(pd.Series([value for value in dataset['Perf_Encoded'].unique()]))).set_axis(['% frequency'], axis=1)
+
             return stats
 
         print(sampleStats(bowMatrixTrain))
