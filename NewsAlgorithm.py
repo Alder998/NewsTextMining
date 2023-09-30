@@ -237,6 +237,8 @@ class Vectorize:
 
             # Encoding delle variabili categoriche
 
+            bowMatrix = bowMatrix.dropna()
+
             for i, uniqueVar in enumerate(bowMatrix['Return_enc'].unique()):
                 bowMatrix.loc[bowMatrix['Return_enc'] == uniqueVar, 'Perf_Encoded'] = i
 
@@ -278,6 +280,8 @@ class Vectorize:
             # Ora possiamo costruire il modello fine a se stesso
 
             # Encoding delle variabili categoriche
+
+            bowMatrix = bowMatrix.dropna()
 
             for i, uniqueVar in enumerate(bowMatrix['Return_enc'].unique()):
                 bowMatrix.loc[bowMatrix['Return_enc'] == uniqueVar, 'Perf_Encoded'] = i
@@ -438,6 +442,8 @@ class Vectorize:
             # Ora possiamo costruire il modello fine a se stesso
 
             # Encoding delle variabili categoriche
+
+            W2V = W2V.dropna()
 
             for i, uniqueVar in enumerate(W2V['Return_enc'].unique()):
                 W2V.loc[W2V['Return_enc'] == uniqueVar, 'Perf_Encoded'] = i
