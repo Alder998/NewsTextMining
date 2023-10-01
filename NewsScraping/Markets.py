@@ -24,27 +24,48 @@ class Markets:
         query = 'SELECT * FROM public."WorldIndexTickers"'
         marketIndex = pd.read_sql(query, engine)
 
+        stocks = marketIndex[marketIndex['Type'] == 'StockIndex']
+        futures = marketIndex[marketIndex['Type'] == 'future']
+
         openMarkets = list()
-        for index in marketIndex['YFTicker']:
+        for index in stocks['YFTicker']:
             index1 = yf.Ticker(index).history('1d', '1m')
             if index1.empty == False:
-                # Definisci il fuso a cui vuoi convertire
+                # Define the time zone
                 actual_timezone = pytz.timezone('Europe/Rome')
 
-                # Converti il tuo indice a quel fuso
+                # Convert your index to the time zone
                 index1.index = index1.index.tz_convert(actual_timezone)
 
-                # prendi l'ultimo dato dell'indice
+                # Take last observation
                 lastTrade = pd.to_datetime(index1.reset_index()['Datetime'].tail(1).reset_index()['Datetime'])[0]
-                # print(lastTrade)
 
-                # Controlla che la data sia la stessa di oggi
+                # Check the last trade date to be the same as today's date
                 if lastTrade.date() == datetime.today().date():
-                    # controlla che l'ora sia la stessa di ora (al minuto è rischioso per la velocita della connessione)
+                    # Check the last trade Hour to be the same hour of now (just with hours,because with minutes as
+                    # well could be misleading
                     if lastTrade.hour == datetime.today.hour:
-                        openMarkets.append(marketIndex['Country'][marketIndex['YFTicker'] == index].reset_index()['Country'][0])
+                        openMarkets.append(stocks['Country'][stocks['YFTicker'] == index].reset_index()['Country'][0])
 
             else:
                 print('Not Found: check connection')
 
-        return openMarkets
+        # Same for the futures tickers
+
+        openMarketsFutures = list()
+        for index in futures['YFTicker']:
+            index1 = yf.Ticker(index).history('2d')
+            if index1.empty == False:
+                actual_timezone = pytz.timezone('Europe/Rome')
+                index1.index = index1.index.tz_convert(actual_timezone)
+                lastTrade = pd.to_datetime(index1.reset_index()['Date'].tail(1).reset_index()['Date'])[0]
+
+                if lastTrade.date() == datetime.today().date():
+                    if lastTrade.hour == datetime.today.hour:
+                        openMarketsFutures.append(futures['Country'][futures['YFTicker'] == index].reset_index()['Country'][0])
+            else:
+                print('Not Found: check connection')
+
+        return openMarkets + openMarketsFutures
+
+    #TODO: Implement the Stock index Picker according to open markets.
