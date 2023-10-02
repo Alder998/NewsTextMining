@@ -6,3 +6,8 @@ from NewsScraping.Markets import Markets
 openMarkets = Markets().getOpenMarkets()
 
 print(openMarkets)
+
+stockIndex = Markets().getStockIndex()
+
+print(openMarkets)
+print(stockIndex)

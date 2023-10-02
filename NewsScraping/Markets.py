@@ -69,11 +69,12 @@ class Markets:
         return openMarkets + openMarketsFutures
 
 
-    def getStockIndex (self):
+    def getStockIndex (self, randomStocksUS=10, randomStocksExUS=50):
 
         import pandas as pd
         import yfinance as yf
         import psycopg2
+        import random
         from sqlalchemy import create_engine
         from datetime import datetime
 
@@ -88,12 +89,44 @@ class Markets:
         openMarkets = self.getOpenMarkets()
 
         # Filter the allStocks sample for the open Markets
-
+        IndexPresentStocks = list()
+        randomStocks = list()
         for market in openMarkets:
             marketStocks = allStocks[allStocks['Country'] == market]
+            # Start taking the main market Index
+            IPStocks = list(marketStocks['Ticker'][marketStocks['IndexPresent'] == 'Y'])
+            IndexPresentStocks.append(IPStocks)
 
+            # Then, to add variability, take 50 random stocks for countries that are not US, and 20 for US (because
+            # We have the S&P 500 for US)
 
-        return 0
+            if market == 'USA':
+                randomPick = randomStocksUS
+            else:
+                randomPick = randomStocksExUS
+
+            marketStocksExIndex = list(marketStocks['Ticker'][marketStocks['IndexPresent'] != 'Y'])
+            rp = list()
+            for stockR in range(randomPick):
+                rp.append(random.choice(marketStocksExIndex))
+            randomStocks.append(rp)
+
+        # Insert every element in the same list
+
+        IndexList = list()
+        randomList = list()
+
+        # Iterate through the list of indexes
+        for IntListIndex in IndexPresentStocks:
+            IndexList.extend(IntListIndex)
+
+        # Iterate through the list of random stocks
+        for IntListRandom in randomStocks:
+            randomList.extend(IntListRandom)
+
+        # return both the elements
+        return IndexList+randomList
+
 
     def updateIndexComponentsOnDatabase (self):
 
@@ -154,12 +187,11 @@ class Markets:
 
         # Add SP500
 
-        SP = pd.read_excel(r"C:\Users\39328\OneDrive\Desktop\S&P500 Constituents.xlsx")
+        SP = pd.read_excel(r"C:\Users\39328\OneDrive\Desktop\S&P500 Constituents.xlsx")['Ticker']
+        SP = pd.DataFrame(SP.set_axis(['Component'], axis=1))
 
-        indexPresent = pd.concat([indexPresent, SP['Tciker']], axis=0).reset_index()
+        indexPresent = pd.concat([indexPresent, SP], axis=0).reset_index()
         del [indexPresent['index']]
-
-        print(indexPresent)
 
         # Import AllStocks DB
 
@@ -168,8 +200,6 @@ class Markets:
         allStocks = pd.read_sql(query, engine)
 
         # indexPresent['Component'] = indexPresent['Component'].str.split('.').str[0]
-
-        print(indexPresent)
 
         for stock in indexPresent['Component']:
             allStocks.loc[allStocks['Ticker'] == stock, 'IndexPresent'] = 'Y'
@@ -187,12 +217,10 @@ class Markets:
         )
 
         engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/YahooFinance')
-        # file.to_sql('AllStockTraded', engine, if_exists='replace', index=False)
+        file.to_sql('AllStockTraded', engine, if_exists='replace', index=False)
 
-        print(allStocks)
+        return allStocks
 
-        print(allStocks.dropna())
-        print(allStocks[['Country', 'IndexPresent']].groupby('Country').count())
 
 
 
