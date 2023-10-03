@@ -25,7 +25,7 @@ class Markets:
         marketIndex = pd.read_sql(query, engine)
 
         stocks = marketIndex[marketIndex['Type'] == 'StockIndex']
-        futures = marketIndex[marketIndex['Type'] == 'future']
+        futures = marketIndex[(marketIndex['Type'] == 'future')]
 
         openMarkets = list()
         for index in stocks['YFTicker']:
