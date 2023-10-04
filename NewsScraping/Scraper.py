@@ -181,7 +181,7 @@ class Scraper:
                     ['Date'], axis=1)
 
                 results.append(pd.concat([today, titleList, authors, pd.Series(np.full(len(titleList), stock))],
-                                         axis=1).set_axis(['Date', 'Article', 'Author', 'Stock'], axis=1))
+                                         axis=1).set_axis(['Date', 'Article', 'Author', 'Ticker'], axis=1))
 
                 print('Bing: Article Gathering (1 out of 2) - Ticker:', stock, ' - Progress:',
                       round(iterat / len(stockIndex) * 100), '%')
@@ -191,7 +191,6 @@ class Scraper:
             finalDF = pd.concat(results).dropna()
 
         return finalDF
-
 
     # Method to get the stock data
     def getStocksData (self):
@@ -207,13 +206,18 @@ class Scraper:
         labels = list()
         for i,ticker in enumerate(stockIndex):
             baseS = yf.Ticker(ticker).history('5d')
-            returns = ((pd.DataFrame(baseS['Close']).pct_change())*100).set_axis(['Returns'], axis = 1)
-            volumes = ((pd.DataFrame(baseS['Volume']).pct_change())*100).set_axis(['Volume'], axis = 1)
-            lab = pd.concat([returns, volumes, pd.DataFrame(np.full(len(volumes['Volume']), ticker))], axis = 1)
-            labels.append(lab)
-            # Progress
-            print('Taking Returns and Volumes... Ticker:', ticker, 'Progress:', round((i/len(stockIndex))*100,2), '%')
+
+            if baseS.empty == False:
+                returns = ((pd.DataFrame(baseS['Close']).pct_change())*100).set_axis(['Returns'], axis = 1)
+                volumes = ((pd.DataFrame(baseS['Volume']).pct_change())*100).set_axis(['Volume'], axis = 1)
+                lab = pd.concat([returns, volumes, pd.DataFrame(np.full(len(volumes['Volume']), ticker)).set_axis(['Ticker'])], axis = 1)
+                labels.append(lab)
+                # Progress
+                print('Taking Returns and Volumes... Ticker:', ticker, 'Progress:', round((i/len(stockIndex))*100,2), '%')
 
         labels = pd.concat([df for df in labels], axis = 0)
 
         return labels
+
+    #TODO: Implement a method to merge the news and the Stock Data. Hint: merge for stock and Date!
+
