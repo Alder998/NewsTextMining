@@ -11,6 +11,7 @@ stockIndex = Markets().getStockIndex()
 
 print('Number of stoks selected:', len(stockIndex))
 
-newsSample = Scraper().getSingleStockMarketNews(source = 'Bing')
+#newsSample = Scraper(stockIndex).getSingleStockMarketNews(source = 'Bing')
+returnsAndVolumes = Scraper(stockIndex).getStocksData()
 
-print(newsSample)
+print(returnsAndVolumes)

@@ -3,7 +3,8 @@
 class Scraper:
     name = "Check Markets conditions"
 
-    def __init__(self):
+    def __init__(self, stockList):
+        self.stockList = stockList
         pass
 
     # Scarico notizie stock mirati
@@ -16,10 +17,9 @@ class Scraper:
         import numpy as np
         from datetime import datetime
         from IPython.display import clear_output
-        from NewsScraping.Markets import Markets
 
         # take the stock index
-        stockIndex = Markets().getStockIndex()
+        stockIndex = self.stockList
 
         if source == 'CNBC':
 
@@ -191,3 +191,29 @@ class Scraper:
             finalDF = pd.concat(results).dropna()
 
         return finalDF
+
+
+    # Method to get the stock data
+    def getStocksData (self):
+
+        import pandas as pd
+        import numpy as np
+        from datetime import datetime
+        import yfinance as yf
+
+        stockIndex = self.stockList
+
+        # set return of last 5 days
+        labels = list()
+        for i,ticker in enumerate(stockIndex):
+            baseS = yf.Ticker(ticker).history('5d')
+            returns = ((pd.DataFrame(baseS['Close']).pct_change())*100).set_axis(['Returns'], axis = 1)
+            volumes = ((pd.DataFrame(baseS['Volume']).pct_change())*100).set_axis(['Volume'], axis = 1)
+            lab = pd.concat([returns, volumes, pd.DataFrame(np.full(len(volumes['Volume']), ticker))], axis = 1)
+            labels.append(lab)
+            # Progress
+            print('Taking Returns and Volumes... Ticker:', ticker, 'Progress:', round((i/len(stockIndex))*100,2), '%')
+
+        labels = pd.concat([df for df in labels], axis = 0)
+
+        return labels
