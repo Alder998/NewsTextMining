@@ -29,7 +29,7 @@ class Markets:
 
         openMarkets = list()
         for index in stocks['YFTicker']:
-            index1 = yf.Ticker(index).history('1d', '1m')
+            index1 = yf.Ticker(index).history('2d', '1m')
             if index1.empty == False:
                 # Define the time zone
                 actual_timezone = pytz.timezone('Europe/Rome')
@@ -47,9 +47,6 @@ class Markets:
                     if lastTrade.hour == datetime.today().hour:
                         openMarkets.append(stocks['Country'][stocks['YFTicker'] == index].reset_index()['Country'][0])
 
-            else:
-                print('Not Found: check connection')
-
         # Same for the futures tickers
 
         openMarketsFutures = list()
@@ -63,8 +60,6 @@ class Markets:
                 if lastTrade.date() == datetime.today().date():
                     if lastTrade.hour == datetime.today().hour:
                         openMarketsFutures.append(futures['Country'][futures['YFTicker'] == index].reset_index()['Country'][0])
-            else:
-                print('Not Found: check connection')
 
         return openMarkets + openMarketsFutures
 

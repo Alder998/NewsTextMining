@@ -7,7 +7,7 @@ from NewsScraping.Scraper import Scraper
 openMarkets = Markets().getOpenMarkets()
 print('Markets Open Now:', len(openMarkets))
 
-stockIndex = Markets().getStockIndex()
+stockIndex = Markets().getStockIndex()[0:10]
 
 print('Number of stoks selected:', len(stockIndex))
 

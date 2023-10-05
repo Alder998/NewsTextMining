@@ -200,24 +200,59 @@ class Scraper:
         from datetime import datetime
         import yfinance as yf
 
-        stockIndex = self.stockList
+        if len(self.stockList) != 0:
 
-        # set return of last 5 days
-        labels = list()
-        for i,ticker in enumerate(stockIndex):
-            baseS = yf.Ticker(ticker).history('5d')
+            stockIndex = self.stockList
 
-            if baseS.empty == False:
-                returns = ((pd.DataFrame(baseS['Close']).pct_change())*100).set_axis(['Returns'], axis = 1)
-                volumes = ((pd.DataFrame(baseS['Volume']).pct_change())*100).set_axis(['Volume'], axis = 1)
-                lab = pd.concat([returns, volumes, pd.DataFrame(np.full(len(volumes['Volume']), ticker)).set_axis(['Ticker'])], axis = 1)
-                labels.append(lab)
-                # Progress
-                print('Taking Returns and Volumes... Ticker:', ticker, 'Progress:', round((i/len(stockIndex))*100,2), '%')
+            # set return of last 5 days
+            labels = list()
+            for i,ticker in enumerate(stockIndex):
+                baseS = yf.Ticker(ticker).history('5d')
 
-        labels = pd.concat([df for df in labels], axis = 0)
+                if baseS.empty == False:
+                    returns = ((pd.DataFrame(baseS['Close']).pct_change().dropna())*100).set_axis(['Returns'], axis = 1).reset_index()
+                    volumes = ((pd.DataFrame(baseS['Volume']).pct_change().dropna())*100).set_axis(['Volume'], axis = 1).reset_index()
+                    lab = pd.concat([returns, volumes, pd.DataFrame(np.full(len(volumes['Volume']),
+                                                ticker)).set_axis(['Ticker'],axis = 1)], axis = 1)
+                    labels.append(lab)
+                    # Progress
+                    print('Taking Returns and Volumes... Ticker:', ticker, 'Progress:', round((i/len(stockIndex))*100,2), '%')
 
-        return labels
+            labels = pd.concat([df for df in labels], axis = 0).reset_index()
+            del[labels['index']]
+            labels['Date1'] = pd.to_datetime(labels['Date']).dt.strftime('%Y.%m.%d')
 
-    #TODO: Implement a method to merge the news and the Stock Data. Hint: merge for stock and Date!
+            return labels
+
+        else:
+            print('No Open Market Found!')
+            return 0
+
+
+    def mergeStockNewsData (self):
+
+        import pandas as pd
+        import numpy as np
+
+        # Merge on Ticker and on date
+        sources = ['Bing', 'CNBC', 'MarketWatch']
+        news = list()
+        for source in sources:
+            newsData = self.getSingleStockMarketNews(source)
+            news.append(newsData)
+        news = pd.concat([series for series in news], axis = 0).reset_index()
+        del[news['index']]
+
+        markets = self.getStocksData()
+
+        # Merge the two DataFrames
+
+        total = news.merge(markets, on = ['Date', 'YFTicker'])
+
+        return total
+
+
+
+
+
 
