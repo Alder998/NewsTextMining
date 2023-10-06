@@ -292,8 +292,8 @@ class Scraper:
 
         # Import the Database with the old news
 
-        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Scraping_Data_V2')
-        query = 'SELECT * FROM public."AllStockTraded"'
+        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+        query = 'SELECT * FROM public."News_Scraping_Data_V2"'
         baseQuery = pd.read_sql(query, engine)
 
         # Take the daily news
@@ -301,9 +301,11 @@ class Scraper:
 
         # Update the database of return, and add the new data
 
-        finalDf = baseQuery.merge(dailyNews, on = ['Ticker', 'Date'], how = 'left')
+        allDf = pd.concat([baseQuery, dailyNews], axis = 0).drop_duplicates()
 
-        return finalDf
+        #finalDf = allDf.merge(dailyNews, on = ['Ticker', 'Date'], how = 'left')
+
+        return allDf
 
 
 
