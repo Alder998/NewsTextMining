@@ -64,7 +64,7 @@ class Scraper:
                                           pd.DataFrame(cnbsNews).set_axis(['Article'], axis=1),
                                           pd.DataFrame(np.full(len(cnbsNews), 'CNBC News')).set_axis(['Author'],
                                                                                                      axis=1),
-                                          pd.DataFrame(np.full(len(cnbsNews), stock)).set_axis(['Stock'], axis=1)],
+                                          pd.DataFrame(np.full(len(cnbsNews), stock)).set_axis(['Ticker'], axis=1)],
                                          axis=1)
 
                     results.append(cnbsNews)
@@ -120,7 +120,7 @@ class Scraper:
                                           pd.DataFrame(cnbsNews).set_axis(['Article'], axis=1),
                                           pd.DataFrame(np.full(len(cnbsNews), 'MarketWatch')).set_axis(['Author'],
                                                                                                        axis=1),
-                                          pd.DataFrame(np.full(len(cnbsNews), stock)).set_axis(['Stock'], axis=1)],
+                                          pd.DataFrame(np.full(len(cnbsNews), stock)).set_axis(['Ticker'], axis=1)],
                                          axis=1)
 
                     results.append(cnbsNews)
@@ -130,8 +130,8 @@ class Scraper:
 
                     clear_output(wait=True)
 
-                finalDF = pd.concat(results).dropna()
-                finalDF = finalDF.drop_duplicates(subset='Article')
+                    finalDF = pd.concat(results).dropna()
+                    finalDF = finalDF.drop_duplicates(subset='Article')
 
         if source == 'Bing':
 
@@ -211,16 +211,21 @@ class Scraper:
 
                 if baseS.empty == False:
                     returns = ((pd.DataFrame(baseS['Close']).pct_change().dropna())*100).set_axis(['Returns'], axis = 1).reset_index()
+                    returns['Date'] = pd.to_datetime(returns['Date']).dt.strftime('%Y.%m.%d')
                     volumes = ((pd.DataFrame(baseS['Volume']).pct_change().dropna())*100).set_axis(['Volume'], axis = 1).reset_index()
+                    volumes['Date_V'] = pd.to_datetime(volumes['Date']).dt.strftime('%Y.%m.%d')
+                    del[volumes['Date']]
+
                     lab = pd.concat([returns, volumes, pd.DataFrame(np.full(len(volumes['Volume']),
                                                 ticker)).set_axis(['Ticker'],axis = 1)], axis = 1)
+                    del[lab['Date_V']]
                     labels.append(lab)
                     # Progress
+
                     print('Taking Returns and Volumes... Ticker:', ticker, 'Progress:', round((i/len(stockIndex))*100,2), '%')
 
-            labels = pd.concat([df for df in labels], axis = 0).reset_index()
+            labels = pd.concat([df for df in labels], axis = 0).reset_index().dropna()
             del[labels['index']]
-            labels['Date1'] = pd.to_datetime(labels['Date']).dt.strftime('%Y.%m.%d')
 
             return labels
 
@@ -232,10 +237,12 @@ class Scraper:
     def mergeStockNewsData (self):
 
         import pandas as pd
-        import numpy as np
+        import psycopg2
+        from sqlalchemy import create_engine
+        from datetime import datetime
 
         # Merge on Ticker and on date
-        sources = ['Bing', 'CNBC', 'MarketWatch']
+        sources = ['Bing']
         news = list()
         for source in sources:
             newsData = self.getSingleStockMarketNews(source)
@@ -247,9 +254,57 @@ class Scraper:
 
         # Merge the two DataFrames
 
-        total = news.merge(markets, on = ['Date', 'YFTicker'])
+        total = news.merge(markets, on = ['Date', 'Ticker'])
+
+        # Save to SQL as DailyV2
+        file = total
+
+        connection = psycopg2.connect(
+            database="News_Data",
+            user="postgres",
+            password="Davidescemo",
+            host="localhost",
+            port="5432"
+        )
+
+        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+        file.to_sql('News_Scraping_DailyV2', engine, if_exists='replace', index=False)
+        file.to_sql('News_Scraping_Data_V2', engine, if_exists='replace', index=False)
+
+        connection.close()
+
+        # Daily Download Statistics
+        print('\n')
+        print('Date:', datetime.today().strftime('%Y.%m.%d'))
+        print('News Downloaded:', len(total['Article']), ', Tickers Affeted:', len(total['Ticker'].unique()))
+        print('\n')
 
         return total
+
+    def updateDataBase (self, dailyNews):
+
+        import pandas as pd
+        import yfinance as yf
+        import psycopg2
+        import random
+        from sqlalchemy import create_engine
+        from datetime import datetime
+
+        # Import the Database with the old news
+
+        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Scraping_Data_V2')
+        query = 'SELECT * FROM public."AllStockTraded"'
+        baseQuery = pd.read_sql(query, engine)
+
+        # Take the daily news
+        dailyNews = dailyNews
+
+        # Update the database of return, and add the new data
+
+        finalDf = baseQuery.merge(dailyNews, on = ['Ticker', 'Date'], how = 'left')
+
+        return finalDf
+
 
 
 

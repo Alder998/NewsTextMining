@@ -64,7 +64,7 @@ class Markets:
         return openMarkets + openMarketsFutures
 
 
-    def getStockIndex (self, randomStocksUS=10, randomStocksExUS=50):
+    def getStockIndex (self, randomStocksUS=10, randomStocksExUS=75):
 
         import pandas as pd
         import yfinance as yf
