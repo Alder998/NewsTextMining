@@ -455,13 +455,12 @@ class Vectorize:
             return W2V
 
 
-class Model:
-    name = "Text Modelling"
+class Sampling:
+    name = "Sampling class"
 
-    def __init__(self, textEmbedding, testSize, epochs):
+    def __init__(self, textEmbedding, testSize):
         self.textEmbedding = textEmbedding
         self.testSize = testSize
-        self.epochs = epochs
         pass
 
     def TrainTestSplit (self):
@@ -516,13 +515,21 @@ class Model:
         return [train_set, train_labels, test_set, test_labels]
 
 
+class NNModel:
+    name = "Text Modelling"
+
+    def __init__(self, sampleMatrix, epochs):
+        self.epochs = epochs
+        self.sampleMatrix = sampleMatrix
+        pass
+
     def NNProcessing (self, NNType = 'FF', shape = [200, 200, 200], shapeRec = [64], activation = 'relu'):
 
         import tensorflow as tf
         import numpy as np
         import pandas as pd
 
-        base = self.TrainTestSplit()
+        base = self.sampleMatrix
 
         train_set = base[0]
         train_labels = base[1]
@@ -548,7 +555,7 @@ class Model:
 
             # Aggiungi il layer SoftMax che rende l'output categorico
 
-            model.add(tf.keras.layers.Dense(len(self.textEmbedding['Perf_Encoded'].unique())))
+            model.add(tf.keras.layers.Dense(len(list(set(train_labels)))))
 
             model.compile(optimizer='adam',
                           loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
@@ -556,7 +563,7 @@ class Model:
 
             # Fitting del modello
 
-            model.fit(train_set, train_labels, epochs=self.epochs, batch_size=len(self.textEmbedding['Perf_Encoded'].unique()))
+            model.fit(train_set, train_labels, epochs=self.epochs, batch_size=len(list(set(train_labels))))
 
             # Prediction sui dati di test
 
@@ -605,7 +612,7 @@ class Model:
 
             # Aggiungi il layer SoftMax che rende l'output categorico
 
-            model.add(tf.keras.layers.Dense(len(self.textEmbedding['Perf_Encoded'].unique())))
+            model.add(tf.keras.layers.Dense(len(list(set(train_labels)))))
 
             model.compile(optimizer='adam',
                           loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
@@ -613,7 +620,7 @@ class Model:
 
             # Fitting del modello
             model.fit(embedded_data_3d, train_labels, epochs=self.epochs,
-                      batch_size=len(self.textEmbedding['Perf_Encoded'].unique()))
+                      batch_size=len(list(set(train_labels))))
 
             # Prediction sui dati di test
 
@@ -638,6 +645,48 @@ class Model:
             print('Test Accuracy:', accuracy * 100, '%')
 
             return predList
+
+class MLModel:
+    name = "Text Modelling"
+
+    def __init__(self, sampleMatrix):
+        self.sampleMatrix = sampleMatrix
+        pass
+
+    def SVCProcessing (self, kernel = 'rbf'):
+
+        from sklearn.svm import SVC
+        from sklearn.metrics import accuracy_score
+        import numpy as np
+        import pandas as pd
+
+        base = self.sampleMatrix
+
+        # Define the train and test set
+        train_set = base[0]
+        train_labels = base[1]
+        test_set = base[2]
+        test_labels = base[3]
+
+        SVM = SVC(kernel = kernel)
+
+        print('\n')
+        print('Fitting Support Vector Classifier...')
+
+        model = SVM.fit(train_set, train_labels)
+
+        # The prediction is not useful now, since we are basically evaluating the performance
+        prediction = model.predict(test_set)
+
+        # Evaluate the accuracy
+
+        accuracy = np.mean(prediction == test_labels)
+
+        print('\n')
+        print('SVC % Accuracy:', accuracy*100)
+
+        return prediction
+
 
 
 
