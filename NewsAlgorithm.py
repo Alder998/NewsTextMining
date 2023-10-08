@@ -505,7 +505,7 @@ class Sampling:
 
             stats = (stats / len(dataset['Perf_Encoded'])) * 100
 
-            stats = (stats.set_index(pd.Series([value for value in dataset['Perf_Encoded'].unique()]))).set_axis(['% frequency'], axis=1)
+            stats = (stats.set_index(pd.Series([value for value in dataset['Perf_Encoded'].sort_values().unique()]))).set_axis(['% frequency'], axis=1)
 
             return stats
 
