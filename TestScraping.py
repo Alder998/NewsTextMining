@@ -15,12 +15,8 @@ print('Number of stoks selected:', len(stockIndex))
 #newsSample = Scraper(stockIndex).getSingleStockMarketNews(source = 'Bing')
 #returnsAndVolumes = Scraper(stockIndex).getStocksData()
 
-#total = Scraper(stockIndex).mergeStockNewsData()
+total = Scraper(stockIndex).mergeStockNewsData()
 
-engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
-query = 'SELECT * FROM public."News_Scraping_DailyV2"'
-base = pd.read_sql(query, engine)
-
-updated = Scraper(stockIndex).updateDataBase(base)
+updated = Scraper(stockIndex).updateDataBase(total)
 
 print(updated)

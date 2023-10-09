@@ -301,7 +301,7 @@ class Scraper:
 
         # Update the database of return, and add the new data
 
-        allDf = pd.concat([baseQuery, dailyNews], axis = 0).drop_duplicates()
+        allDf = pd.concat([baseQuery, dailyNews], axis = 0).drop_duplicates(subset = ['Date', 'Ticker'], keep = 'last')
 
         #finalDf = allDf.merge(dailyNews, on = ['Ticker', 'Date'], how = 'left')
 
