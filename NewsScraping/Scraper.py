@@ -276,7 +276,7 @@ class Scraper:
         # Daily Download Statistics
         print('\n')
         print('Date:', datetime.today().strftime('%Y.%m.%d'))
-        print('News Downloaded:', len(total['Article']), ', Tickers Affeted:', len(total['Ticker'].unique()))
+        print('News Downloaded:', len(total['Article']), '- Tickers Affeted:', len(total['Ticker'].unique()))
         print('\n')
 
         return total
@@ -304,6 +304,9 @@ class Scraper:
         allDf = pd.concat([baseQuery, dailyNews], axis = 0).drop_duplicates(subset = ['Date', 'Ticker'], keep = 'last')
 
         #finalDf = allDf.merge(dailyNews, on = ['Ticker', 'Date'], how = 'left')
+
+        print('Total News in Dataset:', len(allDf['News']))
+        print('Total Number of Ticker in Dataset:', len(allDf['Ticker'].unique()))
 
         return allDf
 
