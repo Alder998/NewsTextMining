@@ -301,11 +301,11 @@ class Scraper:
 
         # Update the database of return, and add the new data
 
-        allDf = pd.concat([baseQuery, dailyNews], axis = 0).drop_duplicates(subset = ['Date', 'Ticker'], keep = 'last')
+        allDf = pd.concat([baseQuery, dailyNews], axis = 0).drop_duplicates(subset = ['Article'])
 
         #finalDf = allDf.merge(dailyNews, on = ['Ticker', 'Date'], how = 'left')
 
-        print('Total News in Dataset:', len(allDf['News']))
+        print('Total News in Dataset:', len(allDf['Article']))
         print('Total Number of Ticker in Dataset:', len(allDf['Ticker'].unique()))
 
         return allDf
