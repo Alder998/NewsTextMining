@@ -16,7 +16,7 @@ textList = pd.read_sql(query, engine)
 cleanData = ns.PreProcessing(textList, target='returns', classes=4, threshold=1.5).preProcess(POS_tagging=False)
 
 # Data Vectorization: turning text data into a vector, numerically processable by an algorithm
-BoWEmbedding = ns.Vectorize(cleanData).Embedding(method = 'Bag-of-Word', vectorSize=30, components = 200)
+BoWEmbedding = ns.Vectorize(cleanData).Embedding(method = 'Word2Vec', vectorSize=30, components = 200)
 
 # Setting the model, compile, train, evaluate the performance on a test set
 sample = ns.Sampling(BoWEmbedding, testSize=0.20).TrainTestSplit()

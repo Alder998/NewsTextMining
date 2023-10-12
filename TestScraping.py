@@ -15,8 +15,12 @@ print('Number of stoks selected:', len(stockIndex))
 #newsSample = Scraper(stockIndex).getSingleStockMarketNews(source = 'Bing')
 #returnsAndVolumes = Scraper(stockIndex).getStocksData()
 
-total = Scraper(stockIndex).mergeStockNewsData()
+#total = Scraper(stockIndex).mergeStockNewsData()
 
-updated = Scraper(stockIndex).updateDataBase(total)
+#updated = Scraper(stockIndex).updateDataBase(total)
 
-print(updated)
+UpdateFinData = Scraper(stockIndex).updateFinancialData()
+
+#print(updated)
+
+print(UpdateFinData)

@@ -276,7 +276,7 @@ class Scraper:
         # Daily Download Statistics
         print('\n')
         print('Date:', datetime.today().strftime('%Y.%m.%d'))
-        print('News Downloaded:', len(total['Article']), '- Tickers Affeted:', len(total['Ticker'].unique()))
+        print('News Downloaded:', len(total['Article'].unique()), '- Tickers Affeted:', len(total['Ticker'].unique()))
         print('\n')
 
         return total
@@ -301,14 +301,71 @@ class Scraper:
 
         # Update the database of return, and add the new data
 
-        allDf = pd.concat([baseQuery, dailyNews], axis = 0).drop_duplicates(subset = ['Article'])
+        allDf = pd.concat([baseQuery, dailyNews], axis = 0).drop_duplicates(subset=['Article'])
 
         #finalDf = allDf.merge(dailyNews, on = ['Ticker', 'Date'], how = 'left')
 
-        print('Total News in Dataset:', len(allDf['Article']))
+        print('Total News in Dataset:', len(allDf['Article'].unique()))
         print('Total Number of Ticker in Dataset:', len(allDf['Ticker'].unique()))
 
         return allDf
+
+    # Once a week, it is needed to Update the returns and the volumes of the stocks (otherwhise the data could not
+    # be corrected)
+
+    def updateFinancialData (self):
+
+        import pandas as pd
+        import yfinance as yf
+        import psycopg2
+        import numpy as np
+        from sqlalchemy import create_engine
+
+        # Take the base dataset
+
+        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+        query = 'SELECT * FROM public."News_Scraping_Data_V2"'
+        baseData = pd.read_sql(query, engine)
+
+        # Take the 30 days return, and put them in the same return format of the database
+
+        base30dRet = list()
+        base30dVol = list()
+        for i, ticker in enumerate(baseData['Ticker'].unique()):
+            baseS = yf.Ticker(ticker).history('5d')
+
+            if baseS.empty == False:
+                returns = ((pd.DataFrame(baseS['Close']).pct_change().dropna()) * 100).set_axis(['Returns'], axis=1).reset_index()
+                returns = pd.concat([returns, pd.DataFrame(np.full(len(returns['Returns']), ticker)).set_axis(['Ticker'], axis = 1)], axis = 1)
+                returns['Date'] = pd.to_datetime(returns['Date']).dt.strftime('%Y.%m.%d')
+
+                volumes = ((pd.DataFrame(baseS['Volume']).pct_change().dropna()) * 100).set_axis(['Volume'], axis=1).reset_index()
+                volumes = pd.concat([volumes, pd.DataFrame(np.full(len(volumes['Volume']), ticker)).set_axis(['Ticker'], axis = 1)], axis = 1)
+                volumes['Date'] = pd.to_datetime(volumes['Date']).dt.strftime('%Y.%m.%d')
+
+                print('Updating Returns and Volumes... Ticker:', ticker, 'Progress:',
+                      round((i / len(baseData['Ticker'].unique())) * 100, 2), '%')
+
+                base30dRet.append(returns)
+                base30dVol.append(volumes)
+
+        base30dRet = pd.concat([series for series in base30dRet], axis=0)
+        base30dVol = pd.concat([series for series in base30dVol], axis=0)
+
+        # Merge everything
+
+        updatedData = baseData.merge(base30dRet, on = ['Date','Ticker'])
+        FUpdatedData = updatedData.merge(base30dVol, on = ['Date','Ticker'])
+
+        # Take note of Dataset dimension
+
+        print('Total News in Dataset:', len(FUpdatedData['Article'].unique()))
+        print('Total Number of Ticker in Dataset:', len(FUpdatedData['Ticker'].unique()))
+
+        return FUpdatedData
+
+
+
 
 
 
