@@ -17,14 +17,33 @@ class Scraper:
         import numpy as np
         from datetime import datetime
         from IPython.display import clear_output
+        from sqlalchemy import create_engine
 
         # take the stock index
         stockIndex = self.stockList
+
+        # Import the allStock Database to get the country
+
+        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/YahooFinance')
+        query = 'SELECT * FROM public."AllStockTraded"'
+        allStocks = pd.read_sql(query, engine)
 
         if source == 'CNBC':
 
             results = list()
             for iterat, stock in enumerate(stockIndex):
+
+                # Track back the market the stock is from
+                country = allStocks['Country'][allStocks['Ticker'] == stock].reset_index()['Country'][0]
+
+                # prepare the ticker to be processed
+                if '.' in stock:
+                    stock = stock[:stock.find('.')]
+                else:
+                    stock = stock
+
+                print('CNBC: Article Gathering (1 out of 2) - Ticker:', stock, ' - Progress:',
+                      round(iterat / len(stockIndex) * 100), '%')
 
                 headers = {
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"}
@@ -36,7 +55,7 @@ class Scraper:
                 resp = requests.get(target_url, headers=headers)
                 soup = BeautifulSoup(resp.text, 'html.parser')  # Pare che l'URL sia libero per fare scraping
 
-                a_tag = soup.findAll('a')
+                a_tag = soup.findAll('a', href=True)
 
                 fs = list()
                 for i in a_tag:
@@ -64,15 +83,14 @@ class Scraper:
                                           pd.DataFrame(cnbsNews).set_axis(['Article'], axis=1),
                                           pd.DataFrame(np.full(len(cnbsNews), 'CNBC News')).set_axis(['Author'],
                                                                                                      axis=1),
-                                          pd.DataFrame(np.full(len(cnbsNews), stock)).set_axis(['Ticker'], axis=1)],
+                                          pd.DataFrame(np.full(len(cnbsNews), stock)).set_axis(['Ticker'], axis=1),
+                                          pd.DataFrame(np.full(len(cnbsNews), country)).set_axis(['Country'], axis = 1)],
                                          axis=1)
 
                     results.append(cnbsNews)
 
-                    print('CNBC: Article Gathering (1 out of 2) - Ticker:', stock, ' - Progress:',
-                          round(iterat / len(stockIndex) * 100), '%')
-
-                    clear_output(wait=True)
+                else:
+                    print('No News found for:', stock, 'on CNBC')
 
             finalDF = pd.concat(results).dropna()
             finalDF = finalDF.drop_duplicates(subset='Article')
@@ -81,6 +99,18 @@ class Scraper:
 
             results = list()
             for iterat, stock in enumerate(stockIndex):
+
+                # Track back the market the stock is from
+                country = allStocks['Country'][allStocks['Ticker'] == stock].reset_index()['Country'][0]
+
+                # prepare the ticker to be processed
+                if '.' in stock:
+                    stock = stock[:stock.find('.')]
+                else:
+                    stock = stock
+
+                print('MarketWatch: Article Gathering (1 out of 2) - Ticker:', stock, ' - Progress:',
+                      round(iterat / len(stockIndex) * 100), '%')
 
                 headers = {
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"}
@@ -92,15 +122,13 @@ class Scraper:
                 resp = requests.get(target_url, headers=headers)
                 soup = BeautifulSoup(resp.text, 'html.parser')  # Pare che l'URL sia libero per fare scraping
 
-                a_tag = soup.findAll('a')
+                a_tag = soup.findAll('a', href=True)
 
                 fs = list()
                 for i in a_tag:
                     fs.append(i)
 
                 a = pd.Series(fs).astype(str)
-
-                a.to_excel(r"C:\Users\39328\OneDrive\Desktop\zio pino indice1.xlsx")
 
                 newsTitle = a[(a.str.contains('mw_quote_news">') == True)].drop_duplicates().reset_index()
                 del [newsTitle['index']]
@@ -120,23 +148,25 @@ class Scraper:
                                           pd.DataFrame(cnbsNews).set_axis(['Article'], axis=1),
                                           pd.DataFrame(np.full(len(cnbsNews), 'MarketWatch')).set_axis(['Author'],
                                                                                                        axis=1),
-                                          pd.DataFrame(np.full(len(cnbsNews), stock)).set_axis(['Ticker'], axis=1)],
+                                          pd.DataFrame(np.full(len(cnbsNews), stock)).set_axis(['Ticker'], axis=1),
+                                          pd.DataFrame(np.full(len(cnbsNews), country)).set_axis(['Country'], axis = 1)],
                                          axis=1)
 
                     results.append(cnbsNews)
 
-                    print('MarketWatch: Article Gathering (1 out of 2) - Ticker:', stock, ' - Progress:',
-                          round(iterat / len(stockIndex) * 100), '%')
+                else:
+                    print('No News found for:', stock, 'on MarketWatch')
 
-                    clear_output(wait=True)
-
-                    finalDF = pd.concat(results).dropna()
-                    finalDF = finalDF.drop_duplicates(subset='Article')
+            finalDF = pd.concat(results).dropna()
+            finalDF = finalDF.drop_duplicates(subset='Article')
 
         if source == 'Bing':
 
             results = list()
             for iterat, stock in enumerate(stockIndex):
+
+                # Track back the market the stock is from
+                country = allStocks['Country'][allStocks['Ticker'] == stock].reset_index()['Country'][0]
 
                 # Mettiamo su l'URL di base: la ricerca di Google News sul Mercato finanziario
 
@@ -180,7 +210,8 @@ class Scraper:
                 today = pd.DataFrame(np.full(len(finalDF['Author']), datetime.today().strftime('%Y.%m.%d'))).set_axis(
                     ['Date'], axis=1)
 
-                results.append(pd.concat([today, titleList, authors, pd.Series(np.full(len(titleList), stock))],
+                results.append(pd.concat([today, titleList, authors, pd.Series(np.full(len(titleList), stock)),
+                                          pd.Series(np.full(len(titleList), country))],
                                          axis=1).set_axis(['Date', 'Article', 'Author', 'Ticker'], axis=1))
 
                 print('Bing: Article Gathering (1 out of 2) - Ticker:', stock, ' - Progress:',
@@ -222,7 +253,7 @@ class Scraper:
                     labels.append(lab)
                     # Progress
 
-                    print('Taking Returns and Volumes... Ticker:', ticker, 'Progress:', round((i/len(stockIndex))*100,2), '%')
+                    print('Taking Returns and Volumes (2 out of 2)... Ticker:', ticker, 'Progress:', round((i/len(stockIndex))*100,2), '%')
 
             labels = pd.concat([df for df in labels], axis = 0).reset_index().dropna()
             del[labels['index']]
@@ -242,7 +273,7 @@ class Scraper:
         from datetime import datetime
 
         # Merge on Ticker and on date
-        sources = ['Bing']
+        sources = ['MarketWatch', 'CNBC', 'Bing']
         news = list()
         for source in sources:
             newsData = self.getSingleStockMarketNews(source)
@@ -299,14 +330,58 @@ class Scraper:
         # Take the daily news
         dailyNews = dailyNews
 
+        # We don't want to lose any data, for multiple runs, so we add just the news that are not currently present in the
+        # entire database.
+
+        dailyNews = dailyNews[dailyNews['Article'].isin(baseQuery['Article']) == False].reset_index()
+        del[dailyNews['index']]
+
         # Update the database of return, and add the new data
 
-        allDf = pd.concat([baseQuery, dailyNews], axis = 0).drop_duplicates(subset=['Article'])
+        allDf = pd.concat([baseQuery, dailyNews], axis = 0).drop_duplicates(subset=['Article'], keep='first')
 
         #finalDf = allDf.merge(dailyNews, on = ['Ticker', 'Date'], how = 'left')
 
+        MVNumber = len(dailyNews['Article'][dailyNews['Author'] == 'MarketWatch'].unique())
+        CNBCNumber = len(dailyNews['Article'][dailyNews['Author'] == 'CNBC'].unique())
+        BINGNumber = len(dailyNews['Article'][(dailyNews['Author'] != 'MarketWatch') & (dailyNews['Author'] != 'CNBC')].unique())
+
+        MVTicker = len(dailyNews['Ticker'][dailyNews['Author'] == 'MarketWatch'].unique())
+        CNBCTicker = len(dailyNews['Ticker'][dailyNews['Author'] == 'CNBC'].unique())
+        BINGTicker = len(dailyNews['Ticker'][(dailyNews['Author'] != 'MarketWatch') & (dailyNews['Author'] != 'CNBC')].unique())
+
+        print('\n')
+        print('-----LAST RUN-----')
+        print('News added in the last Run:', len(dailyNews['Article'].unique()))
+        print('Bing Search:', BINGNumber, 'News, Tickers:', BINGTicker)
+        print('CNBC News:', CNBCNumber, 'News, Tickers:', CNBCTicker)
+        print('MarketWatch:', MVNumber, 'News, Tickers:', MVTicker)
+
+        print('\n')
+
+        print('-----TOTAL DATABASE (V2)-----')
         print('Total News in Dataset:', len(allDf['Article'].unique()))
         print('Total Number of Ticker in Dataset:', len(allDf['Ticker'].unique()))
+        print('\n')
+
+        # Save the updated database to sql, only if it contains more information than the base one
+
+        if len(baseQuery['Article']) < len(allDf['Article']):
+
+            file = allDf
+
+            connection = psycopg2.connect(
+                database="News_Data",
+                user="postgres",
+                password="Davidescemo",
+                host="localhost",
+                port="5432"
+            )
+
+            engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+            #file.to_sql('News_Scraping_Data_V2', engine, if_exists='replace', index=False)
+
+            connection.close()
 
         return allDf
 
