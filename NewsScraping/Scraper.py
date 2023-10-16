@@ -92,8 +92,11 @@ class Scraper:
                 else:
                     print('No News found for:', stock, 'on CNBC')
 
-            finalDF = pd.concat(results).dropna()
-            finalDF = finalDF.drop_duplicates(subset='Article')
+            if len(results) != 0:
+                finalDF = pd.concat(results).dropna()
+                finalDF = finalDF.drop_duplicates(subset='Article')
+            else:
+                finalDF = pd.DataFrame([])
 
         if source == 'MarketWatch':
 
@@ -157,8 +160,11 @@ class Scraper:
                 else:
                     print('No News found for:', stock, 'on MarketWatch')
 
-            finalDF = pd.concat(results).dropna()
-            finalDF = finalDF.drop_duplicates(subset='Article')
+            if len(results) != 0:
+                finalDF = pd.concat(results).dropna()
+                finalDF = finalDF.drop_duplicates(subset='Article')
+            else:
+                finalDF = pd.DataFrame([])
 
         if source == 'Bing':
 
@@ -212,7 +218,7 @@ class Scraper:
 
                 results.append(pd.concat([today, titleList, authors, pd.Series(np.full(len(titleList), stock)),
                                           pd.Series(np.full(len(titleList), country))],
-                                         axis=1).set_axis(['Date', 'Article', 'Author', 'Ticker'], axis=1))
+                                         axis=1).set_axis(['Date', 'Article', 'Author', 'Ticker', 'Country'], axis=1))
 
                 print('Bing: Article Gathering (1 out of 2) - Ticker:', stock, ' - Progress:',
                       round(iterat / len(stockIndex) * 100), '%')
@@ -300,7 +306,7 @@ class Scraper:
 
         engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
         file.to_sql('News_Scraping_DailyV2', engine, if_exists='replace', index=False)
-        file.to_sql('News_Scraping_Data_V2', engine, if_exists='replace', index=False)
+        #file.to_sql('News_Scraping_Data_V2', engine, if_exists='replace', index=False)
 
         connection.close()
 
@@ -366,22 +372,22 @@ class Scraper:
 
         # Save the updated database to sql, only if it contains more information than the base one
 
-        if len(baseQuery['Article']) < len(allDf['Article']):
+        #if len(baseQuery['Article']) < len(allDf['Article']):
 
-            file = allDf
+        file = allDf
 
-            connection = psycopg2.connect(
+        connection = psycopg2.connect(
                 database="News_Data",
                 user="postgres",
                 password="Davidescemo",
                 host="localhost",
                 port="5432"
-            )
+        )
 
-            engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
-            #file.to_sql('News_Scraping_Data_V2', engine, if_exists='replace', index=False)
+        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+        file.to_sql('News_Scraping_Data_V2', engine, if_exists='replace', index=False)
 
-            connection.close()
+        connection.close()
 
         return allDf
 
