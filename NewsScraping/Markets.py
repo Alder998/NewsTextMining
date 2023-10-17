@@ -214,6 +214,8 @@ class Markets:
         engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/YahooFinance')
         file.to_sql('AllStockTraded', engine, if_exists='replace', index=False)
 
+        connection.close()
+
         return allStocks
 
 

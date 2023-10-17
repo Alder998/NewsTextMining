@@ -31,16 +31,21 @@ class Scraper:
         if source == 'CNBC':
 
             results = list()
-            for iterat, stock in enumerate(stockIndex):
+            for iterat, stockBase in enumerate(stockIndex):
 
                 # Track back the market the stock is from
-                country = allStocks['Country'][allStocks['Ticker'] == stock].reset_index()['Country'][0]
+                country = allStocks['Country'][allStocks['Ticker'] == stockBase].reset_index()['Country'][0]
+                countryCode = allStocks['CountryCode'][allStocks['Ticker'] == stockBase].reset_index()['CountryCode'][0]
 
-                # prepare the ticker to be processed
-                if '.' in stock:
-                    stock = stock[:stock.find('.')]
+                # Prepare the Ticker to be processes
+                if country == 'USA':
+                    target_url = "https://www.cnbc.com/quotes/" + stockBase + "?qsearchterm=" + stockBase
                 else:
-                    stock = stock
+                    if '.' in stockBase:
+                        stock = stockBase[:stockBase.find('.')]
+                    else:
+                        stock = stockBase
+                    target_url = "https://www.cnbc.com/quotes/" + stock + '-' + str(countryCode) + "?qsearchterm=" + stock + '-' + str(countryCode)
 
                 print('CNBC: Article Gathering (1 out of 2) - Ticker:', stock, ' - Progress:',
                       round(iterat / len(stockIndex) * 100), '%')
@@ -49,8 +54,6 @@ class Scraper:
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"}
 
                 # Mettiamo su l'URL di base: la ricerca di Google News sul Mercato finanziario
-
-                target_url = "https://www.cnbc.com/quotes/" + stock + "?qsearchterm=" + stock
 
                 resp = requests.get(target_url, headers=headers)
                 soup = BeautifulSoup(resp.text, 'html.parser')  # Pare che l'URL sia libero per fare scraping
@@ -83,9 +86,11 @@ class Scraper:
                                           pd.DataFrame(cnbsNews).set_axis(['Article'], axis=1),
                                           pd.DataFrame(np.full(len(cnbsNews), 'CNBC News')).set_axis(['Author'],
                                                                                                      axis=1),
-                                          pd.DataFrame(np.full(len(cnbsNews), stock)).set_axis(['Ticker'], axis=1),
+                                          pd.DataFrame(np.full(len(cnbsNews), stockBase)).set_axis(['Ticker'], axis=1),
                                           pd.DataFrame(np.full(len(cnbsNews), country)).set_axis(['Country'], axis = 1)],
                                          axis=1)
+
+                    print('Found:', len(cnbsNews['Article'].unique()), 'News')
 
                     results.append(cnbsNews)
 
@@ -101,26 +106,31 @@ class Scraper:
         if source == 'MarketWatch':
 
             results = list()
-            for iterat, stock in enumerate(stockIndex):
+            for iterat, stockBase in enumerate(stockIndex):
 
                 # Track back the market the stock is from
-                country = allStocks['Country'][allStocks['Ticker'] == stock].reset_index()['Country'][0]
+                country = allStocks['Country'][allStocks['Ticker'] == stockBase].reset_index()['Country'][0]
+                countryCode = allStocks['CountryCode'][allStocks['Ticker'] == stockBase].reset_index()['CountryCode'][0]
 
-                # prepare the ticker to be processed
-                if '.' in stock:
-                    stock = stock[:stock.find('.')]
-                else:
-                    stock = stock
-
-                print('MarketWatch: Article Gathering (1 out of 2) - Ticker:', stock, ' - Progress:',
+                print('MarketWatch: Article Gathering (1 out of 2) - Ticker:', stockBase, ' - Progress:',
                       round(iterat / len(stockIndex) * 100), '%')
 
                 headers = {
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"}
 
-                # Mettiamo su l'URL di base: la ricerca di Google News sul Mercato finanziario
+                # change the target URL According to the market index
 
-                target_url = "https://www.marketwatch.com/investing/stock/" + stock
+                if country == 'USA':
+                    target_url = "https://www.marketwatch.com/investing/stock/" + stockBase
+                else:
+
+                    # prepare the ticker to be processed
+                    if '.' in stockBase:
+                        stock = stockBase[:stockBase.find('.')]
+                    else:
+                        stock = stockBase
+
+                    target_url = "https://www.marketwatch.com/investing/stock/" + stock + "?countryCode=" + str(countryCode)
 
                 resp = requests.get(target_url, headers=headers)
                 soup = BeautifulSoup(resp.text, 'html.parser')  # Pare che l'URL sia libero per fare scraping
@@ -151,9 +161,11 @@ class Scraper:
                                           pd.DataFrame(cnbsNews).set_axis(['Article'], axis=1),
                                           pd.DataFrame(np.full(len(cnbsNews), 'MarketWatch')).set_axis(['Author'],
                                                                                                        axis=1),
-                                          pd.DataFrame(np.full(len(cnbsNews), stock)).set_axis(['Ticker'], axis=1),
+                                          pd.DataFrame(np.full(len(cnbsNews), stockBase)).set_axis(['Ticker'], axis=1),
                                           pd.DataFrame(np.full(len(cnbsNews), country)).set_axis(['Country'], axis = 1)],
                                          axis=1)
+
+                    print('Found:', len(cnbsNews['Article'].unique()), 'News')
 
                     results.append(cnbsNews)
 
@@ -279,7 +291,7 @@ class Scraper:
         from datetime import datetime
 
         # Merge on Ticker and on date
-        sources = ['MarketWatch', 'CNBC', 'Bing']
+        sources = ['MarketWatch', 'Bing']
         news = list()
         for source in sources:
             newsData = self.getSingleStockMarketNews(source)
@@ -349,12 +361,12 @@ class Scraper:
         #finalDf = allDf.merge(dailyNews, on = ['Ticker', 'Date'], how = 'left')
 
         MVNumber = len(dailyNews['Article'][dailyNews['Author'] == 'MarketWatch'].unique())
-        CNBCNumber = len(dailyNews['Article'][dailyNews['Author'] == 'CNBC'].unique())
-        BINGNumber = len(dailyNews['Article'][(dailyNews['Author'] != 'MarketWatch') & (dailyNews['Author'] != 'CNBC')].unique())
+        CNBCNumber = len(dailyNews['Article'][dailyNews['Author'] == 'CNBC News'].unique())
+        BINGNumber = len(dailyNews['Article'][(dailyNews['Author'] != 'MarketWatch') & (dailyNews['Author'] != 'CNBC News')].unique())
 
         MVTicker = len(dailyNews['Ticker'][dailyNews['Author'] == 'MarketWatch'].unique())
-        CNBCTicker = len(dailyNews['Ticker'][dailyNews['Author'] == 'CNBC'].unique())
-        BINGTicker = len(dailyNews['Ticker'][(dailyNews['Author'] != 'MarketWatch') & (dailyNews['Author'] != 'CNBC')].unique())
+        CNBCTicker = len(dailyNews['Ticker'][dailyNews['Author'] == 'CNBC News'].unique())
+        BINGTicker = len(dailyNews['Ticker'][(dailyNews['Author'] != 'MarketWatch') & (dailyNews['Author'] != 'CNBC News')].unique())
 
         print('\n')
         print('-----LAST RUN-----')
@@ -388,6 +400,9 @@ class Scraper:
         file.to_sql('News_Scraping_Data_V2', engine, if_exists='replace', index=False)
 
         connection.close()
+
+        allDf = allDf.reset_index()
+        del[allDf['index']]
 
         return allDf
 
@@ -444,8 +459,6 @@ class Scraper:
         print('Total Number of Ticker in Dataset:', len(FUpdatedData['Ticker'].unique()))
 
         return FUpdatedData
-
-
 
 
 
