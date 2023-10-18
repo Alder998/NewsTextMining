@@ -47,7 +47,7 @@ class Scraper:
                         stock = stockBase
                     target_url = "https://www.cnbc.com/quotes/" + stock + '-' + str(countryCode) + "?qsearchterm=" + stock + '-' + str(countryCode)
 
-                print('CNBC: Article Gathering (1 out of 2) - Ticker:', stock, ' - Progress:',
+                print('CNBC: Article Gathering (1 out of 2) - Ticker:', stockBase, ' - Progress:',
                       round(iterat / len(stockIndex) * 100), '%')
 
                 headers = {
@@ -95,7 +95,7 @@ class Scraper:
                     results.append(cnbsNews)
 
                 else:
-                    print('No News found for:', stock, 'on CNBC')
+                    print('No News found for:', stockBase, 'on CNBC')
 
             if len(results) != 0:
                 finalDF = pd.concat(results).dropna()
@@ -170,7 +170,7 @@ class Scraper:
                     results.append(cnbsNews)
 
                 else:
-                    print('No News found for:', stock, 'on MarketWatch')
+                    print('No News found for:', stockBase, 'on MarketWatch')
 
             if len(results) != 0:
                 finalDF = pd.concat(results).dropna()
@@ -291,7 +291,7 @@ class Scraper:
         from datetime import datetime
 
         # Merge on Ticker and on date
-        sources = ['MarketWatch', 'Bing']
+        sources = ['MarketWatch', 'CNBC', 'Bing']
         news = list()
         for source in sources:
             newsData = self.getSingleStockMarketNews(source)
