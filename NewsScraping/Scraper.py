@@ -460,6 +460,98 @@ class Scraper:
 
         return FUpdatedData
 
+    def generateStatistics (self, database = 'Total'):
+
+        import matplotlib.pyplot as plt
+        import pandas as pd
+        import numpy as np
+        from datetime import datetime
+        from sqlalchemy import create_engine
+
+        if database == 'total':
+            engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+            query = 'SELECT * FROM public."News_Scraping_Data_V2"'
+            data = pd.read_sql(query, engine)
+            title = 'TOTAL DATABASE'
+
+        if database == 'today':
+            engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+            query = 'SELECT * FROM public."News_Scraping_Data_V2"'
+            data = pd.read_sql(query, engine)
+            data = data[data['Date'] == datetime.today().strftime('%Y.%m.%d')]
+            title = 'TODAY'
+
+        # Distribuzione per classi
+
+        plt.figure(figsize=(12, 12))
+        plt.suptitle(title, fontsize=16)
+
+        # Source
+
+        # Preparo i dati
+        data.loc[data['Author'].str.contains('CNBC'), 'Source'] = 'CNBC News'
+        data.loc[data['Author'].str.contains('MarketWatch'), 'Source'] = 'MarketWatch'
+        data.loc[(~data['Author'].str.contains('CNBC')) & (
+            ~data['Author'].str.contains('MarketWatch')), 'Source'] = 'Bing Search'
+
+        pieSource = data.groupby('Source').count()['Article'].transpose()
+
+        plt.subplot(2, 2, 1)
+        plt.pie(pieSource, labels=pieSource.index, autopct='%1.1f%%')
+        plt.title('Source')
+
+        # Country
+
+        # Preparo i dati
+        data.loc[(data['Country'] == 'Italy') | (data['Country'] == 'France') | (data['Country'] == 'Germany') |
+                 (data['Country'] == 'Spain') | (data['Country'] == 'Netherlands') | (data['Country'] == 'Greece') |
+                 (data['Country'] == 'Denmark') | (data['Country'] == 'Belgium') | (
+                             data['Country'] == 'United Kingdom') |
+                 (data['Country'] == 'Norway') | (data['Country'] == 'Sweden'),
+                 'Area'] = 'Europe'
+        data.loc[(data['Country'] == 'USA') | (data['Country'] == 'Canada'), 'Area'] = 'USA and Canada'
+        data.loc[(data['Country'] == 'India') | (data['Country'] == 'Hong Kong') |
+                 (data['Country'] == 'Singapore'), 'Area'] = 'Asia'
+        data.loc[(data['Country'] == 'Mexico') | (data['Country'] == 'Brazil'), 'Area'] = 'South America'
+
+        pieCountry = data.groupby('Area').count()['Article'].transpose()
+
+        plt.subplot(2, 2, 2)
+        plt.pie(pieCountry, labels=pieCountry.index, autopct='%1.1f%%')
+        plt.title('Geographic Area')
+
+        # Rendimenti (threshold: 1.5%)
+
+        # Preparo i dati
+
+        data.loc[data['Returns'] > 0, 'Returns_class'] = 'UP'
+        data.loc[data['Returns'] < 0, 'Returns_class'] = 'DOWN'
+        data.loc[data['Returns'] > 1.5, 'Returns_class'] = 'STRONG UP'
+        data.loc[data['Returns'] < -1.5, 'Returns_class'] = 'STRONG DOWN'
+
+        pieClassR = data.groupby('Returns_class').count()['Article'].transpose()
+
+        plt.subplot(2, 2, 3)
+        plt.pie(pieClassR, labels=pieClassR.index, autopct='%1.1f%%')
+        plt.title('Returns')
+
+        # Volume (threshold: 20%)
+
+        # Preparo i dati
+
+        data.loc[data['Volume'] > 0, 'Volume_class'] = 'UP'
+        data.loc[data['Volume'] < 0, 'Volume_class'] = 'DOWN'
+        data.loc[data['Volume'] > 20, 'Volume_class'] = 'STRONG UP'
+        data.loc[data['Volume'] < -20, 'Volume_class'] = 'STRONG DOWN'
+
+        pieClassV = data.groupby('Volume_class').count()['Article'].transpose()
+
+        plt.subplot(2, 2, 4)
+        plt.pie(pieClassV, labels=pieClassR.index, autopct='%1.1f%%')
+        plt.title('Volume')
+
+        plt.show()
+
 
 
 

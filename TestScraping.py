@@ -14,3 +14,7 @@ updated = Scraper(stockIndex).updateDataBase(total)
 
 print(updated)
 
+# See the download Statistics
+
+s = Scraper(stockIndex).generateStatistics('today')
+
