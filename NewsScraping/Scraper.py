@@ -283,7 +283,7 @@ class Scraper:
             return 0
 
 
-    def mergeStockNewsData (self):
+    def MassiveScraper (self):
 
         import pandas as pd
         import psycopg2
