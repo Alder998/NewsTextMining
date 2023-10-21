@@ -4,30 +4,35 @@ from datetime import datetime
 
 # Get the Open Markets
 openMarkets = Markets().getOpenMarkets()
-print('Markets Open Now:', len(openMarkets))
-
 # Gather the stock Index
 stockIndex = Markets().getStockIndex()
 
-print('Number of stocks selected:', len(stockIndex))
+if len(openMarkets) != 0:
 
-# Take the News, and the related Return and Volume % Change
-total = Scraper(stockIndex).MassiveScraper()
+    print('Markets Open Now:', len(openMarkets))
+    print('Number of stocks selected:', len(stockIndex))
 
-updated = Scraper(stockIndex).updateDataBase(total)
+    # Take the News, and the related Return and Volume % Change
+    total = Scraper(stockIndex).MassiveScraper()
 
-print(updated)
+    updated = Scraper(stockIndex).updateDataBase(total)
+
+    print(updated)
+
+    # See the download Statistics about today
+    stat = Scraper(stockIndex).generateStatistics('today')
+
+else:
+    print('All the markets are closed')
 
 # if it is Saturday, update the financial data
 if datetime.today().weekday() == 5:
     upd = Scraper(stockIndex).updateFinancialData()
 
-# See the download Statistics about today, or total (but we are gonna see the total JUST in the case of return Update)
-
-todayData = updated[updated['Date'] == datetime.today().strftime('%Y.%m.%d')]
-
-if todayData.empty == False:
-    stat = Scraper(stockIndex).generateStatistics('today')
-else:
+    # See the download Statistics about the total database
     stat = Scraper(stockIndex).generateStatistics('total')
+
+
+
+
 
