@@ -428,7 +428,7 @@ class Scraper:
         base30dRet = list()
         base30dVol = list()
         for i, ticker in enumerate(baseData['Ticker'].unique()):
-            baseS = yf.Ticker(ticker).history('5d')
+            baseS = yf.Ticker(ticker).history('30d')
 
             if baseS.empty == False:
                 returns = ((pd.DataFrame(baseS['Close']).pct_change().dropna()) * 100).set_axis(['Returns'], axis=1).reset_index()
@@ -450,17 +450,49 @@ class Scraper:
 
         # Merge everything
 
-        updatedData = baseData.merge(base30dRet, on = ['Date','Ticker'])
-        FUpdatedData = updatedData.merge(base30dVol, on = ['Date','Ticker'])
+        updatedData = baseData.merge(base30dRet, on=['Date', 'Ticker'], how='left')
+        FUpdatedData = updatedData.merge(base30dVol, on=['Date', 'Ticker'], how='left')
 
         # Take note of Dataset dimension
 
         print('Total News in Dataset:', len(FUpdatedData['Article'].unique()))
         print('Total Number of Ticker in Dataset:', len(FUpdatedData['Ticker'].unique()))
 
+        # Where the return and volumes of the columns "Return_y" is not NaN, substitute it. Else, take the old one
+
+        FUpdatedData.loc[FUpdatedData['Returns_y'].isna() == False, 'Returns'] = FUpdatedData['Returns_y']
+        FUpdatedData.loc[FUpdatedData['Returns_y'].isna() == True, 'Returns'] = FUpdatedData['Returns_x']
+
+        FUpdatedData.loc[FUpdatedData['Volume_y'].isna() == False, 'Volume'] = FUpdatedData['Volume_y']
+        FUpdatedData.loc[FUpdatedData['Volume_y'].isna() == True, 'Volume'] = FUpdatedData['Volume_x']
+
+        # Drop the columns produced by the merge method
+
+        del [FUpdatedData['Volume_x']]
+        del [FUpdatedData['Volume_y']]
+        del [FUpdatedData['Returns_y']]
+        del [FUpdatedData['Returns_x']]
+
+        # Save the Database
+
+        file = FUpdatedData
+
+        connection = psycopg2.connect(
+            database="News_Data",
+            user="postgres",
+            password="Davidescemo",
+            host="localhost",
+            port="5432"
+        )
+
+        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+        file.to_sql('News_Scraping_Data_V2', engine, if_exists='replace', index=False)
+
+        connection.close()
+
         return FUpdatedData
 
-    def generateStatistics (self, database = 'Total'):
+    def generateStatistics (self, database = 'total'):
 
         import matplotlib.pyplot as plt
         import pandas as pd

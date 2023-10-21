@@ -6,15 +6,19 @@ print('Markets Open Now:', len(openMarkets))
 
 stockIndex = Markets().getStockIndex()
 
-print('Number of stocks selected:', len(stockIndex))
-
-total = Scraper(stockIndex).mergeStockNewsData()
-
-updated = Scraper(stockIndex).updateDataBase(total)
-
-print(updated)
+#print('Number of stocks selected:', len(stockIndex))
+#
+#total = Scraper(stockIndex).mergeStockNewsData()
+#
+#updated = Scraper(stockIndex).updateDataBase(total)
+#
+#print(updated)
 
 # See the download Statistics
 
-s = Scraper(stockIndex).generateStatistics('today')
+upd = Scraper(stockIndex).updateFinancialData()
+
+print(upd)
+
+s = Scraper(stockIndex).generateStatistics('total')
 
