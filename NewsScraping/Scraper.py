@@ -492,7 +492,7 @@ class Scraper:
 
         return FUpdatedData
 
-    def generateStatistics (self, database = 'total'):
+    def generateStatistics (self, database = 'total', expand = 'None'):
 
         import matplotlib.pyplot as plt
         import pandas as pd
@@ -535,16 +535,24 @@ class Scraper:
         # Country
 
         # Preparo i dati
-        data.loc[(data['Country'] == 'Italy') | (data['Country'] == 'France') | (data['Country'] == 'Germany') |
-                 (data['Country'] == 'Spain') | (data['Country'] == 'Netherlands') | (data['Country'] == 'Greece') |
-                 (data['Country'] == 'Denmark') | (data['Country'] == 'Belgium') | (
+        if 'Europe' in expand:
+            data = data
+        else:
+            data.loc[(data['Country'] == 'Italy') | (data['Country'] == 'France') | (data['Country'] == 'Germany') |
+                     (data['Country'] == 'Spain') | (data['Country'] == 'Netherlands') | (data['Country'] == 'Greece') |
+                     (data['Country'] == 'Denmark') | (data['Country'] == 'Belgium') | (
                              data['Country'] == 'United Kingdom') |
-                 (data['Country'] == 'Norway') | (data['Country'] == 'Sweden'),
-                 'Area'] = 'Europe'
-        data.loc[(data['Country'] == 'USA') | (data['Country'] == 'Canada'), 'Area'] = 'USA and Canada'
-        data.loc[(data['Country'] == 'India') | (data['Country'] == 'Hong Kong') |
-                 (data['Country'] == 'Singapore'), 'Area'] = 'Asia'
+                     (data['Country'] == 'Norway') | (data['Country'] == 'Sweden'),
+                     'Area'] = 'Europe'
+
+        if 'Asia' in expand:
+            data = data
+        else:
+            data.loc[(data['Country'] == 'India') | (data['Country'] == 'Hong Kong') |
+                     (data['Country'] == 'Singapore'), 'Area'] = 'Asia'
+
         data.loc[(data['Country'] == 'Mexico') | (data['Country'] == 'Brazil'), 'Area'] = 'South America'
+        data.loc[(data['Country'] == 'USA') | (data['Country'] == 'Canada'), 'Area'] = 'USA and Canada'
 
         pieCountry = data.groupby('Area').count()['Article'].transpose()
 
