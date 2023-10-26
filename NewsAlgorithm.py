@@ -19,11 +19,12 @@ from sklearn.preprocessing import StandardScaler
 class PreProcessing:
     name = "Text Pre-Processing"
 
-    def __init__(self, textList, target, classes, threshold):
+    def __init__(self, textList, target, classes, threshold, databaseVersion = 'V1'):
         self.textList = textList
         self.target = target
         self.classes = classes
         self.threshold = threshold
+        self.databaseVersion = databaseVersion
         pass
 
     # Different methods to get different News
@@ -47,6 +48,13 @@ class PreProcessing:
         import tensorflow as tf
         from sklearn.model_selection import train_test_split
 
+        if self.databaseVersion == 'V1':
+            retColumn = 'Same-Day Close'
+            volColumn = 'Same-Day Volume'
+        if self.databaseVersion == 'V2':
+            retColumn = 'Returns'
+            volColumn = 'Volume'
+
         print('Importing data...')
         stockNews = self.textList
 
@@ -54,34 +62,34 @@ class PreProcessing:
 
         if self.classes == 4:
             if self.target == 'returns':
-                 stockNews.loc[stockNews['Same-Day Close'] > 0, 'Return_enc'] = 'UP'
-                 stockNews.loc[stockNews['Same-Day Close'] < 0, 'Return_enc'] = 'DOWN'
-                 stockNews.loc[stockNews['Same-Day Close'] > self.threshold, 'Return_enc'] = 'STRONG UP'
-                 stockNews.loc[stockNews['Same-Day Close'] < - (self.threshold), 'Return_enc'] = 'STRONG DOWN'
+                 stockNews.loc[stockNews[retColumn] > 0, 'Return_enc'] = 'UP'
+                 stockNews.loc[stockNews[retColumn] < 0, 'Return_enc'] = 'DOWN'
+                 stockNews.loc[stockNews[retColumn] > self.threshold, 'Return_enc'] = 'STRONG UP'
+                 stockNews.loc[stockNews[retColumn] < - (self.threshold), 'Return_enc'] = 'STRONG DOWN'
 
-                 del[stockNews['Same-Day Volume']]
+                 del[stockNews[volColumn]]
 
             if self.target == 'volume':
-                 stockNews.loc[stockNews['Same-Day Volume'] > 0, 'Return_enc'] = 'UP'
-                 stockNews.loc[stockNews['Same-Day Volume'] < 0, 'Return_enc'] = 'DOWN'
-                 stockNews.loc[stockNews['Same-Day Volume'] > self.threshold, 'Return_enc'] = 'STRONG UP'
-                 stockNews.loc[stockNews['Same-Day Volume'] < - (self.threshold), 'Return_enc'] = 'STRONG DOWN'
+                 stockNews.loc[stockNews[volColumn] > 0, 'Return_enc'] = 'UP'
+                 stockNews.loc[stockNews[volColumn] < 0, 'Return_enc'] = 'DOWN'
+                 stockNews.loc[stockNews[volColumn] > self.threshold, 'Return_enc'] = 'STRONG UP'
+                 stockNews.loc[stockNews[volColumn] < - (self.threshold), 'Return_enc'] = 'STRONG DOWN'
 
-                 del[stockNews['Same-Day Close']]
+                 del[stockNews[retColumn]]
 
         if self.classes == 2:
 
             if self.target == 'returns':
-                stockNews.loc[stockNews['Same-Day Close'] > 0, 'Return_enc'] = 'UP'
-                stockNews.loc[stockNews['Same-Day Close'] < 0, 'Return_enc'] = 'DOWN'
+                stockNews.loc[stockNews[retColumn] > 0, 'Return_enc'] = 'UP'
+                stockNews.loc[stockNews[retColumn] < 0, 'Return_enc'] = 'DOWN'
 
-                del [stockNews['Same-Day Volume']]
+                del [stockNews[volColumn]]
 
             if self.target == 'volume':
-                stockNews.loc[stockNews['Same-Day Volume'] > 0, 'Return_enc'] = 'UP'
-                stockNews.loc[stockNews['Same-Day Volume'] < 0, 'Return_enc'] = 'DOWN'
+                stockNews.loc[stockNews[volColumn] > 0, 'Return_enc'] = 'UP'
+                stockNews.loc[stockNews[volColumn] < 0, 'Return_enc'] = 'DOWN'
 
-                del [stockNews['Same-Day Close']]
+                del [stockNews[retColumn]]
 
 
         # Filtriamo per le sole notizie in inglese
