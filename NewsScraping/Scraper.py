@@ -492,7 +492,7 @@ class Scraper:
 
         return FUpdatedData
 
-    def generateStatistics (self, database = 'total', expand = 'None'):
+    def generateStatistics (self, database = 'total', expand = []):
 
         import matplotlib.pyplot as plt
         import pandas as pd
@@ -536,7 +536,7 @@ class Scraper:
 
         # Preparo i dati
         if 'Europe' in expand:
-            data = data
+            data['Area'] = data['Country']
         else:
             data.loc[(data['Country'] == 'Italy') | (data['Country'] == 'France') | (data['Country'] == 'Germany') |
                      (data['Country'] == 'Spain') | (data['Country'] == 'Netherlands') | (data['Country'] == 'Greece') |
@@ -546,7 +546,7 @@ class Scraper:
                      'Area'] = 'Europe'
 
         if 'Asia' in expand:
-            data = data
+            data['Area'] = data['Country']
         else:
             data.loc[(data['Country'] == 'India') | (data['Country'] == 'Hong Kong') |
                      (data['Country'] == 'Singapore'), 'Area'] = 'Asia'

@@ -20,7 +20,10 @@ if len(openMarkets) != 0:
     print(updated)
 
     # See the download Statistics about today
-    stat = Scraper(stockIndex).generateStatistics('today')
+    if 'USA' in openMarkets:
+        stat = Scraper(stockIndex).generateStatistics('today')
+    if 'Italy' or 'France' or 'Germany' or 'Spain' or'India' or 'Hong Kong' or 'Singapore' in openMarkets:
+        stat = Scraper(stockIndex).generateStatistics('today', expand=['Europe', 'Asia'])
 
 else:
     print('All the markets are closed')
