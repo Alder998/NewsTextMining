@@ -28,8 +28,8 @@ if len(openMarkets) != 0:
 else:
     print('All the markets are closed')
 
-# if it is Saturday, update the financial data
-if datetime.today().weekday() == 5:
+# if it is Saturday or Sunday, update the financial data
+if (datetime.today().weekday() == 5) or (datetime.today().weekday() == 6):
     upd = Scraper(stockIndex).updateFinancialData()
 
     # See the download Statistics about the total database
