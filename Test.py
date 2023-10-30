@@ -10,7 +10,7 @@ engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Da
 query = 'SELECT * FROM public."News_Scraping_Data_V2"'
 textList = pd.read_sql(query, engine)
 
-#textList = textList[0:1000]
+#textList = textList[0:500]
 
 # Preprocessing the data: taking english news, removing stop words, taking the words' root
 cleanData = ns.PreProcessing(textList, target='returns', classes=4, threshold=1, databaseVersion='V2').preProcess(POS_tagging=False)
