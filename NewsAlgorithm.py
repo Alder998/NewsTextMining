@@ -610,9 +610,11 @@ class NNModel:
 
             # Imposta il numero di Layer ricorrenti
             for counter, sizeDimR in enumerate(shapeRec):
-                model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(sizeDimR, return_sequences=True)))
+                model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(sizeDimR, input_shape=(train_set.shape[1], train_set.shape[0]),
+                                                                             dropout=0.2, return_sequences=True)))
                 if counter == len(shapeRec) - 1:
-                    model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(sizeDimR, return_sequences=False)))
+                    model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(sizeDimR, input_shape=(train_set.shape[1], train_set.shape[0]),
+                                                                                 dropout=0.2, return_sequences=False)))
 
             # Setta il numero di Layer di tipo FF
             for sizeDim in shape:
