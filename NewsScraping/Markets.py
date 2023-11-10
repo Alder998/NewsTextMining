@@ -64,7 +64,7 @@ class Markets:
         return openMarkets + openMarketsFutures
 
 
-    def getStockIndex (self, randomStocksUS=10, randomStocksExUS=75):
+    def getStockIndex (self, option='Index and Random', randomStocksUS=10, randomStocksExUS=75):
 
         import pandas as pd
         import yfinance as yf
@@ -87,13 +87,14 @@ class Markets:
         IndexPresentStocks = list()
         randomStocks = list()
         for market in openMarkets:
+
             marketStocks = allStocks[allStocks['Country'] == market]
             # Start taking the main market Index
             IPStocks = list(marketStocks['Ticker'][marketStocks['IndexPresent'] == 'Y'])
             IndexPresentStocks.append(IPStocks)
 
-            # Then, to add variability, take 50 random stocks for countries that are not US, and 20 for US (because
-            # We have the S&P 500 for US)
+            # Then, to add variability, take 75 random stocks for countries that are not US, and 10 for US (because
+            # We have the S&P 500)
 
             if market == 'USA':
                 randomPick = randomStocksUS
@@ -119,9 +120,13 @@ class Markets:
         for IntListRandom in randomStocks:
             randomList.extend(IntListRandom)
 
-        # return both the elements
-        return IndexList+randomList
-
+        # return the elements according to option parameter
+        if option == 'Index and Random':
+            return set(IndexList+randomList)
+        if option == 'Index only':
+            return set(IndexList+randomList)
+        if option == 'Random only':
+            return set(IndexList+randomList)
 
     def updateIndexComponentsOnDatabase (self):
 
