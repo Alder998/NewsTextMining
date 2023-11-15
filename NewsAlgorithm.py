@@ -12,9 +12,9 @@
 # - Modelling: Experiment different supervised and non supervised models to get the best accuracy for text
 # Classification
 # - Performance Testing: Compare the models' different performances.
+
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-
 
 class PreProcessing:
     name = "Text Pre-Processing"
