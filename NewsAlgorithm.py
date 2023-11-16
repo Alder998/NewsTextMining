@@ -411,6 +411,28 @@ class Vectorize:
 
             return ARBoWMatrix
 
+        if method == 'TF-IDF':
+
+            # Here we will try to implement a TF-IDF document: it basically is a formula starting from the Bag of Word Model.
+            # Therefore, it is still a so-called "Sparse Embedding method". The formula is:
+            # TF(i) = ln(frequency(i, j) / log(N(i))
+            # The frequency is the number of times that a word i occurs in the text j, while N(i) is the total length of the
+            # text itself. In this wayy, it evaluate more the wrds that Occur the most in a corpus.
+
+            from sklearn.feature_extraction.text import TfidfVectorizer
+
+            # Introduce the Vectorizer
+            vectorizer = TfidfVectorizer()
+
+            # Calculate the value of the embedding
+            print('Generating the TF-IDF Embedding...')
+            tfidf_matrix = vectorizer.fit_transform(self.processedData)
+
+            # Ottenere il vocabolario e gli embedding
+            tfidf_embedding = tfidf_matrix.toarray()
+
+            return tfidf_embedding 
+
         if method == "Word2Vec":
 
             import pandas as pd
