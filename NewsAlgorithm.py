@@ -413,6 +413,8 @@ class Vectorize:
 
         if method == 'TF-IDF':
 
+            import pandas as pd
+
             # Here we will try to implement a TF-IDF document: it basically is a formula starting from the Bag of Word Model.
             # Therefore, it is still a so-called "Sparse Embedding method". The formula is:
             # TF(i) = ln(frequency(i, j) / log(N(i))
@@ -424,14 +426,42 @@ class Vectorize:
             # Introduce the Vectorizer
             vectorizer = TfidfVectorizer()
 
+            # Prepare the text
+            TFIDFList = list()
+            for series in self.processedData[0]:
+                TFIDFList.append(list(series['Tokens']))
+
+            # Convert the values to be processed
+
+            TFIDFListj = [' '.join(tokens) for tokens in TFIDFList]
+
             # Calculate the value of the embedding
             print('Generating the TF-IDF Embedding...')
-            tfidf_matrix = vectorizer.fit_transform(self.processedData)
+            tfidf_matrix = vectorizer.fit_transform(TFIDFListj)
 
-            # Ottenere il vocabolario e gli embedding
+            # Obtain the final matrix
             tfidf_embedding = tfidf_matrix.toarray()
 
-            return tfidf_embedding 
+            # Put it into Pandas DataFrame Format
+
+            tfidf_embedding = pd.DataFrame(tfidf_embedding)
+
+            # Work on the stocks
+
+            stocks = pd.DataFrame(self.processedData[2]).set_axis(['Return_enc'], axis=1)
+            TFIDF = pd.concat([tfidf_embedding, stocks], axis=1)
+
+            # Categorical Variables Encoding
+
+            TFIDF = TFIDF.dropna()
+
+            for i, uniqueVar in enumerate(TFIDF['Return_enc'].unique()):
+                TFIDF.loc[TFIDF['Return_enc'] == uniqueVar, 'Perf_Encoded'] = i
+            del [TFIDF['Return_enc']]
+
+            TFIDF = TFIDF.dropna()
+
+            return TFIDF
 
         if method == "Word2Vec":
 

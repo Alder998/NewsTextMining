@@ -5,7 +5,8 @@ from datetime import datetime
 # Get the Open Markets
 openMarkets = Markets().getOpenMarkets()
 # Gather the stock Index
-stockIndex = Markets().getStockIndex(option = 'Index and Random', randomStocksUS=50, randomStocksExUS=100)
+stockIndex = Markets().getStockIndex(option = 'Random only', randomStocksUS=200, randomStocksExUS=50,
+                                     excludeAlreadyProcessed=True)
 
 if len(openMarkets) != 0:
 

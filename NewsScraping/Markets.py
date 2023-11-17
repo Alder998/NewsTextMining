@@ -24,7 +24,7 @@ class Markets:
         query = 'SELECT * FROM public."WorldIndexTickers"'
         marketIndex = pd.read_sql(query, engine)
 
-        stocks = marketIndex[marketIndex['Type'] == 'StockIndex']
+        stocks = marketIndex[(marketIndex['Type'] == 'StockIndex') | (marketIndex['Type'] == 'Bond')]
         futures = marketIndex[(marketIndex['Type'] == 'future')]
 
         openMarkets = list()
@@ -47,7 +47,8 @@ class Markets:
                     if lastTrade.hour == datetime.today().hour:
                         openMarkets.append(stocks['Country'][stocks['YFTicker'] == index].reset_index()['Country'][0])
 
-        # Same for the futures tickers
+        # Same for the futures tickers. Yahoo Finance NEVER Allows to see future markets open. Therefore, the constaint
+        # to have the market open could be removed for them. However,
 
         openMarketsFutures = list()
         for index in futures['YFTicker']:
@@ -64,7 +65,7 @@ class Markets:
         return openMarkets + openMarketsFutures
 
 
-    def getStockIndex (self, option='Index and Random', randomStocksUS=10, randomStocksExUS=75):
+    def getStockIndex (self, option='Index and Random', randomStocksUS=10, randomStocksExUS=75, excludeAlreadyProcessed=False):
 
         import pandas as pd
         import yfinance as yf
@@ -73,8 +74,14 @@ class Markets:
         from sqlalchemy import create_engine
         from datetime import datetime
 
+        # Import the news already downloaded on the day
+        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+        query = 'SELECT * FROM public."News_Scraping_Data_V2"'
+        todayNews = pd.read_sql(query, engine)
+        today = datetime.today().strftime('%Y.%m.%d')
+        tickerNewsOfTheDay = pd.DataFrame(todayNews['Ticker'][todayNews['Date'] == today].unique()).set_axis(['Ticker'],
+                                                                                                             axis = 1)
         # Import the Database with all the stocks traded
-
         engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/YahooFinance')
         query = 'SELECT * FROM public."AllStockTraded"'
         allStocks = pd.read_sql(query, engine)
@@ -101,10 +108,17 @@ class Markets:
             else:
                 randomPick = randomStocksExUS
 
-            marketStocksExIndex = list(marketStocks['Ticker'][marketStocks['IndexPresent'] != 'Y'])
+            # Select the Ticker not downloaded on the day and the ones not in the index
+            if excludeAlreadyProcessed == False:
+                marketStocksExIndex = list(marketStocks['Ticker'][(marketStocks['IndexPresent'] != 'Y')])
+            if excludeAlreadyProcessed == True:
+                marketStocksExIndex = list(marketStocks['Ticker'][(marketStocks['IndexPresent'] != 'Y') &
+                                       (~marketStocks['Ticker'].isin(tickerNewsOfTheDay['Ticker']))])
+
             rp = list()
             for stockR in range(randomPick):
-                rp.append(random.choice(marketStocksExIndex))
+                if len(marketStocksExIndex) != 0:
+                    rp.append(random.choice(marketStocksExIndex))
             randomStocks.append(rp)
 
         # Insert every element in the same list
@@ -124,9 +138,9 @@ class Markets:
         if option == 'Index and Random':
             return set(IndexList+randomList)
         if option == 'Index only':
-            return set(IndexList+randomList)
+            return set(randomList)
         if option == 'Random only':
-            return set(IndexList+randomList)
+            return set(IndexList)
 
     def updateIndexComponentsOnDatabase (self):
 
