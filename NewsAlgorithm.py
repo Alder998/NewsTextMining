@@ -463,6 +463,42 @@ class Vectorize:
 
             return TFIDF
 
+        # Implementation of a BERT Embedding. It is a dense embedding based on Neural Network. It is pre-trained and
+        # Based on a Bidirectional recurrent Neural Network
+        if method == 'BERT':
+
+            from transformers import BertTokenizer, BertModel
+            import torch
+
+            # Take the base-size list of the pre-processed words
+
+            # Convert the values to be processed
+            BERTList = list()
+            for series in self.processedData[0]:
+                BERTList.append(list(series['Tokens']))
+
+            # Load the pre-trained Tokenizer
+            tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+            model = BertModel.from_pretrained('bert-base-uncased')
+
+            # Tokenize and convert in tensor with Torch
+            token_ids = [tokenizer.convert_tokens_to_ids(tokens) for tokens in BERTList]
+            input_ids = torch.tensor(token_ids)
+
+            # Pass all the tensor created above through the BERT Model
+            with torch.no_grad():
+                outputs = model(input_ids, output_hidden_states=True)
+
+            # Take only the dimension of the last layer
+            last_hidden_states = outputs.last_hidden_state
+
+            # The last layer contains the Embedding values. It is pre-trained, so it has a standard size (768 tokens,
+            # with the base BERT)
+            print(last_hidden_states)
+
+            return last_hidden_states
+
+
         if method == "Word2Vec":
 
             import pandas as pd
