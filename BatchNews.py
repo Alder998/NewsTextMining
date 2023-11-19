@@ -2,6 +2,7 @@
 
 import NewsAlgorithm as ns
 import pandas as pd
+import numpy as np
 from sqlalchemy import create_engine
 
 # Getting the text data
@@ -12,21 +13,78 @@ textList = pd.read_sql(query, engine)
 
 #textList = textList[0:1000]
 
-# Take the Inputs
+# Define all the Parameters needed
 
-target = input('Select the Target [returns / volumes]:')
+# Define the outer parameters - as inputs to be processed
+target = input('Choose target value [returns / volume]:')
+classes = int(input('Choose the Number of classes [2 / 4]:'))
+databaseVersion = 'V2'
+embeddingType = int(input('Choose the Embedding from [Bag-of-Words:0, TF-IDF:1, Word2Vec:2]:'))
+embeddingList = ['Bag-of-Words', 'TF-IDF', 'Word2Vec']
+method = embeddingList[embeddingType]
+modelType = input('Choose the Model Type [NN / ML]:')
 
 # Preprocessing the data: taking english news, removing stop words, taking the words' root
-cleanData = ns.PreProcessing(textList, target=target, classes=2, threshold=1, databaseVersion='V2').preProcess(POS_tagging=False)
+if target == 'volume':
+    t=20
+if target == 'returns':
+    t=1
 
-# Data Vectorization: turning text data into a vector, numerically processable by an algorithm
-method = 'Word2Vec'
-BoWEmbedding = ns.Vectorize(cleanData).Embedding(method = method)
+if modelType == 'NN':
+    # Set parameters
+    epochs = int(input('Choose the number of Epochs:'))
+    typeNN = input('Choose the NN Type [FF / recurrent]:')
+    if typeNN == 'recurrent':
+        recL = int(input('choose the number of recurrent layers:'))
+        shapeRec = list(np.full(recL, 128))
+    else:
+        shapeRec = None
+    FFL = int(input('choose the number of FF layers:'))
+    shape = list(np.full(FFL, 200))
+    act = input('Choose the Activation [relu / tanh]:')
 
-# Setting the model, compile, train, evaluate the performance on a test set
-sample = ns.Sampling(BoWEmbedding, testSize=0.15).TrainTestSplit()
+    # Run the Algorithm
 
-#modelSet = ns.NNModel(sample, epochs=10).NNProcessing(NNType='FF', shapeRec=[128], shape = [200, 200, 200],
-#                                                            activation = 'relu', reportEmbedding = method)
+    cleanData = ns.PreProcessing(textList, target=target, classes=classes, threshold=t,
+                                 databaseVersion=databaseVersion).preProcess(POS_tagging=False)
 
-modelSet = ns.MLModel(sample).SVCProcessing(kernel = 'rbf', reportEmbedding = method)
+    # Data Vectorization: turning text data into a vector, numerically processable by an algorithm
+    method = 'Word2Vec'
+    BoWEmbedding = ns.Vectorize(cleanData).Embedding(method=method)
+
+    # Setting the model, compile, train, evaluate the performance on a test set
+    sample = ns.Sampling(BoWEmbedding, testSize=0.15).TrainTestSplit()
+
+    modelSet = ns.NNModel(sample, epochs=10).NNProcessing(NNType=typeNN, shapeRec=shapeRec, shape = shape,
+                                                            activation = act)
+
+if modelType == 'ML':
+
+    # Run the Algorithm
+
+    cleanData = ns.PreProcessing(textList, target=target, classes=classes, threshold=t,
+                                 databaseVersion=databaseVersion).preProcess(POS_tagging=False)
+
+    # Data Vectorization: turning text data into a vector, numerically processable by an algorithm
+    method = 'Word2Vec'
+    BoWEmbedding = ns.Vectorize(cleanData).Embedding(method=method)
+
+    # Setting the model, compile, train, evaluate the performance on a test set
+    sample = ns.Sampling(BoWEmbedding, testSize=0.15).TrainTestSplit()
+
+    modelSet = ns.MLModel(sample).SVCProcessing(kernel = 'rbf')
+
+# Integrate the DB and save
+
+outerDB = {
+    'Target': [target],
+    'classes': [classes],
+    'DatabaseVersion': [databaseVersion],
+    'Embedding': [method]
+}
+
+baseData = pd.read_excel(r"C:\Users\39328\OneDrive\Desktop\News Model Results\News Model Results.xlsx")
+resultDB = pd.concat([pd.DataFrame(outerDB), modelSet[1]], axis = 1)
+finalDB = pd.concat([baseData, resultDB], axis = 0)
+finalDB.to_excel(r"C:\Users\39328\OneDrive\Desktop\News Model Results\News Model Results.xlsx", index=False)
+

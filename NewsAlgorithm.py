@@ -652,13 +652,12 @@ class NNModel:
 
         # Just for reporting Purpose
 
-        print(len(base[4]))
-        if len(base[4]) == 4:
+        if len(base[4]['Perf_Encoded'].unique()) == 4:
             ClassDivTrain = (sampleStats(base[4])).set_axis([0], axis = 1).transpose().set_axis(['TrainClass1%', 'TrainClass2%',
                                                                                     'TrainClass3%', 'TrainClass4%'], axis = 1)
             ClassDivTest = (sampleStats(base[5])).set_axis([0], axis = 1).transpose().set_axis(['TestClass1%', 'TestClass2%',
                                                                                     'TestClass3%', 'TestClass4%'], axis = 1)
-        if len(base[4] == 2):
+        elif len(base[4]['Perf_Encoded'].unique()) == 2:
             ClassDivTrain = (sampleStats(base[4])).set_axis([0], axis = 1).transpose().set_axis(['TrainClass1%',
                                                                                                  'TrainClass2%'], axis = 1)
             ClassDivTest = (sampleStats(base[5])).set_axis([0], axis = 1).transpose().set_axis(['TestClass1%',
@@ -849,12 +848,12 @@ class MLModel:
             return stats
 
         # Just for reporting Purpose
-        if len(base[4]) == 4:
+        if len(base[4]['Perf_Encoded'].unique()) == 4:
             ClassDivTrain = (sampleStats(base[4])).set_axis([0], axis = 1).transpose().set_axis(['TrainClass1%', 'TrainClass2%',
                                                                                     'TrainClass3%', 'TrainClass4%'], axis = 1)
             ClassDivTest = (sampleStats(base[5])).set_axis([0], axis = 1).transpose().set_axis(['TestClass1%', 'TestClass2%',
                                                                                     'TestClass3%', 'TestClass4%'], axis = 1)
-        if len(base[4] == 2):
+        if len(base[4]['Perf_Encoded'].unique()) == 2:
             ClassDivTrain = (sampleStats(base[4])).set_axis([0], axis = 1).transpose().set_axis(['TrainClass1%',
                                                                                                  'TrainClass2%'], axis = 1)
             ClassDivTest = (sampleStats(base[5])).set_axis([0], axis = 1).transpose().set_axis(['TestClass1%',
@@ -894,7 +893,7 @@ class MLModel:
             'Layers': 'None',
             'Epochs': 'None',
             'Test Loss': 'None',
-            'Test Accuracy': accuracy/100
+            'Test Accuracy': accuracy
         }
 
         ExcelData = pd.concat([pd.DataFrame(dataDictionary), ClassSizes], axis=1)

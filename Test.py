@@ -13,9 +13,9 @@ textList = pd.read_sql(query, engine)
 textList = textList[0:1000]
 
 # Define the outer parameters
-target='returns'
-classes=4
-databaseVersion='V2'
+target = 'returns'
+classes = 2
+databaseVersion = 'V2'
 
 # Preprocessing the data: taking english news, removing stop words, taking the words' root
 cleanData = ns.PreProcessing(textList, target=target, classes=classes, threshold=1, databaseVersion=databaseVersion).preProcess(POS_tagging=False)
@@ -27,10 +27,10 @@ BoWEmbedding = ns.Vectorize(cleanData).Embedding(method = method)
 # Setting the model, compile, train, evaluate the performance on a test set
 sample = ns.Sampling(BoWEmbedding, testSize=0.15).TrainTestSplit()
 
-modelSet = ns.NNModel(sample, epochs=10).NNProcessing(NNType='FF', shapeRec=[128], shape = [200, 200, 200],
-                                                            activation = 'relu')
+#modelSet = ns.NNModel(sample, epochs=10).NNProcessing(NNType='FF', shapeRec=[128], shape = [200, 200, 200],
+#                                                            activation = 'relu')
 
-#modelSet = ns.MLModel(sample).SVCProcessing(kernel = 'rbf')
+modelSet = ns.MLModel(sample).SVCProcessing(kernel = 'rbf')
 
 # Integrate the DB and save
 
@@ -41,8 +41,8 @@ outerDB = {
     'Embedding': [method]
 }
 
-#baseData = pd.read_excel(r"C:\Users\39328\OneDrive\Desktop\News Model Results\News Model Results.xlsx")
+baseData = pd.read_excel(r"C:\Users\39328\OneDrive\Desktop\News Model Results\News Model Results.xlsx")
 resultDB = pd.concat([pd.DataFrame(outerDB), modelSet[1]], axis = 1)
-#finalDB = pd.concat([baseData, resultDB], axis = 0)
-resultDB.to_excel(r"C:\Users\39328\OneDrive\Desktop\News Model Results\News Model Results.xlsx", index=False)
+finalDB = pd.concat([baseData, resultDB], axis = 0)
+finalDB.to_excel(r"C:\Users\39328\OneDrive\Desktop\News Model Results\News Model Results.xlsx", index=False)
 
