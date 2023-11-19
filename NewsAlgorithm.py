@@ -12,6 +12,7 @@
 # - Modelling: Experiment different supervised and non supervised models to get the best accuracy for text
 # Classification
 # - Performance Testing: Compare the models' different performances.
+from datetime import datetime
 
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -211,7 +212,7 @@ class Vectorize:
         self.processedData = processedData
         pass
 
-    def Embedding (self, method = 'Bag-of-Word', vectorSize = 1000, components = 5):
+    def Embedding (self, method = 'Bag-of-Word', vectorSize = 1000, components = 5, getMethod = False):
 
         if method == 'Bag-of-Word':
 
@@ -550,7 +551,6 @@ class Vectorize:
 
             return W2V
 
-
 class Sampling:
     name = "Sampling class"
 
@@ -608,8 +608,7 @@ class Sampling:
         print(sampleStats(bowMatrixTrain))
         print(sampleStats(bowMatrixTest))
 
-        return [train_set, train_labels, test_set, test_labels]
-
+        return [train_set, train_labels, test_set, test_labels, bowMatrixTrain, bowMatrixTest]
 
 class NNModel:
     name = "Text Modelling"
@@ -621,6 +620,8 @@ class NNModel:
 
     def NNProcessing (self, NNType = 'FF', shape = [200, 200, 200], shapeRec = [64], activation = 'relu'):
 
+        import pickle
+        import os
         import tensorflow as tf
         import numpy as np
         import pandas as pd
@@ -631,6 +632,38 @@ class NNModel:
         train_labels = base[1]
         test_set = base[2]
         test_labels = base[3]
+
+        # Sample Stats Method
+        def sampleStats (dataset):
+            stats = list()
+            for diffRet in dataset['Perf_Encoded'].sort_values().unique():
+                st = dataset['Perf_Encoded'][dataset['Perf_Encoded'] == diffRet].count()
+                stats.append(st)
+
+            stats = pd.DataFrame(stats)
+
+            # Converti in percentuali sul totale delle osservazioni
+
+            stats = (stats / len(dataset['Perf_Encoded'])) * 100
+
+            stats = (stats.set_index(pd.Series([value for value in dataset['Perf_Encoded'].sort_values().unique()]))).set_axis(['% frequency'], axis=1)
+
+            return stats
+
+        # Just for reporting Purpose
+
+        print(len(base[4]))
+        if len(base[4]) == 4:
+            ClassDivTrain = (sampleStats(base[4])).set_axis([0], axis = 1).transpose().set_axis(['TrainClass1%', 'TrainClass2%',
+                                                                                    'TrainClass3%', 'TrainClass4%'], axis = 1)
+            ClassDivTest = (sampleStats(base[5])).set_axis([0], axis = 1).transpose().set_axis(['TestClass1%', 'TestClass2%',
+                                                                                    'TestClass3%', 'TestClass4%'], axis = 1)
+        if len(base[4] == 2):
+            ClassDivTrain = (sampleStats(base[4])).set_axis([0], axis = 1).transpose().set_axis(['TrainClass1%',
+                                                                                                 'TrainClass2%'], axis = 1)
+            ClassDivTest = (sampleStats(base[5])).set_axis([0], axis = 1).transpose().set_axis(['TestClass1%',
+                                                                                                'TestClass2%'], axis = 1)
+        ClassSizes = pd.concat([ClassDivTrain, ClassDivTest], axis = 1)
 
         if NNType == 'FF':
 
@@ -683,7 +716,24 @@ class NNModel:
             print('Test Loss:', loss)
             print('Test Accuracy:', accuracy * 100, '%')
 
-            return predList
+            # Saving on a Record Excel file
+
+            dataDictionary = {
+                'Date': [datetime.today().strftime('%Y.%m.%d')],
+                'Train Size': len(train_set),
+                'Test Size': len(test_set),
+                'Learning Type': 'Feed-Forward Neural Network',
+                'Activation': activation,
+                'Layers (recurrent)': 0,
+                'Layers': len(shape),
+                'Epochs': self.epochs,
+                'Test Loss': loss,
+                'Test Accuracy': accuracy
+            }
+
+            ExcelData = pd.concat([pd.DataFrame(dataDictionary), ClassSizes], axis=1)
+
+            return [predList, ExcelData]
 
         if NNType == 'recurrent':
 
@@ -738,11 +788,29 @@ class NNModel:
 
             loss, accuracy = model.evaluate(test_set, test_labels)
 
+            # Show result metrics
             print('\n')
             print('Test Loss:', loss)
             print('Test Accuracy:', accuracy * 100, '%')
 
-            return predList
+            # Saving on a Record Excel file
+
+            dataDictionary = {
+                'Date': [datetime.today().strftime('%Y.%m.%d')],
+                'Train Size': len(train_set),
+                'Test Size': len(test_set),
+                'Learning Type': 'Recurrent Neural Network',
+                'Activation': activation,
+                'Layers (recurrent)': len(shapeRec),
+                'Layers': len(shape),
+                'Epochs': self.epochs,
+                'Test Loss': loss,
+                'Test Accuracy': accuracy
+            }
+
+            ExcelData = pd.concat([pd.DataFrame(dataDictionary), ClassSizes], axis=1)
+
+            return [predList, ExcelData]
 
 class MLModel:
     name = "Text Modelling"
@@ -754,11 +822,44 @@ class MLModel:
     def SVCProcessing (self, kernel = 'rbf'):
 
         from sklearn.svm import SVC
+        import pickle
         from sklearn.metrics import accuracy_score
         import numpy as np
+        import os
         import pandas as pd
 
         base = self.sampleMatrix
+
+        # Sample stats method to get the Metrics
+
+        def sampleStats (dataset):
+            stats = list()
+            for diffRet in dataset['Perf_Encoded'].sort_values().unique():
+                st = dataset['Perf_Encoded'][dataset['Perf_Encoded'] == diffRet].count()
+                stats.append(st)
+
+            stats = pd.DataFrame(stats)
+
+            # Converti in percentuali sul totale delle osservazioni
+
+            stats = (stats / len(dataset['Perf_Encoded'])) * 100
+
+            stats = (stats.set_index(pd.Series([value for value in dataset['Perf_Encoded'].sort_values().unique()]))).set_axis(['% frequency'], axis=1)
+
+            return stats
+
+        # Just for reporting Purpose
+        if len(base[4]) == 4:
+            ClassDivTrain = (sampleStats(base[4])).set_axis([0], axis = 1).transpose().set_axis(['TrainClass1%', 'TrainClass2%',
+                                                                                    'TrainClass3%', 'TrainClass4%'], axis = 1)
+            ClassDivTest = (sampleStats(base[5])).set_axis([0], axis = 1).transpose().set_axis(['TestClass1%', 'TestClass2%',
+                                                                                    'TestClass3%', 'TestClass4%'], axis = 1)
+        if len(base[4] == 2):
+            ClassDivTrain = (sampleStats(base[4])).set_axis([0], axis = 1).transpose().set_axis(['TrainClass1%',
+                                                                                                 'TrainClass2%'], axis = 1)
+            ClassDivTest = (sampleStats(base[5])).set_axis([0], axis = 1).transpose().set_axis(['TestClass1%',
+                                                                                                'TestClass2%'], axis = 1)
+        ClassSizes = pd.concat([ClassDivTrain, ClassDivTest], axis = 1)
 
         # Define the train and test set
         train_set = base[0]
@@ -783,7 +884,22 @@ class MLModel:
         print('\n')
         print('SVC % Accuracy:', accuracy*100)
 
-        return prediction
+        dataDictionary = {
+            'Date': [datetime.today().strftime('%Y.%m.%d')],
+            'Train Size': len(train_set),
+            'Test Size': len(test_set),
+            'Learning Type': 'Support Vector Machine',
+            'Activation': 'None',
+            'Layers (recurrent)': 'None',
+            'Layers': 'None',
+            'Epochs': 'None',
+            'Test Loss': 'None',
+            'Test Accuracy': accuracy/100
+        }
+
+        ExcelData = pd.concat([pd.DataFrame(dataDictionary), ClassSizes], axis=1)
+
+        return [prediction, ExcelData]
 
 
 
