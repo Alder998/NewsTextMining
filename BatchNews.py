@@ -11,7 +11,7 @@ engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Da
 query = 'SELECT * FROM public."News_Scraping_Data_V2"'
 textList = pd.read_sql(query, engine)
 
-#textList = textList[0:1000]
+#textList = textList[0:500]
 
 # Define all the Parameters needed
 
@@ -19,9 +19,10 @@ textList = pd.read_sql(query, engine)
 target = input('Choose target value [returns / volume]:')
 classes = int(input('Choose the Number of classes [2 / 4]:'))
 databaseVersion = 'V2'
-embeddingType = int(input('Choose the Embedding from [Bag-of-Words:0, TF-IDF:1, Word2Vec:2]:'))
-embeddingList = ['Bag-of-Words', 'TF-IDF', 'Word2Vec']
+embeddingType = int(input('Choose the Embedding from [Bag-of-Word:0, TF-IDF:1, Word2Vec:2]:'))
+embeddingList = ['Bag-of-Word', 'TF-IDF', 'Word2Vec']
 method = embeddingList[embeddingType]
+print('Embedding Chosen:', method)
 modelType = input('Choose the Model Type [NN / ML]:')
 
 # Preprocessing the data: taking english news, removing stop words, taking the words' root
@@ -36,7 +37,7 @@ if modelType == 'NN':
     typeNN = input('Choose the NN Type [FF / recurrent]:')
     if typeNN == 'recurrent':
         recL = int(input('choose the number of recurrent layers:'))
-        shapeRec = list(np.full(recL, 128))
+        shapeRec = list(np.full(recL, 32))
     else:
         shapeRec = None
     FFL = int(input('choose the number of FF layers:'))
@@ -49,13 +50,12 @@ if modelType == 'NN':
                                  databaseVersion=databaseVersion).preProcess(POS_tagging=False)
 
     # Data Vectorization: turning text data into a vector, numerically processable by an algorithm
-    method = 'Word2Vec'
     BoWEmbedding = ns.Vectorize(cleanData).Embedding(method=method)
 
     # Setting the model, compile, train, evaluate the performance on a test set
     sample = ns.Sampling(BoWEmbedding, testSize=0.15).TrainTestSplit()
 
-    modelSet = ns.NNModel(sample, epochs=10).NNProcessing(NNType=typeNN, shapeRec=shapeRec, shape = shape,
+    modelSet = ns.NNModel(sample, epochs=epochs).NNProcessing(NNType=typeNN, shapeRec=shapeRec, shape = shape,
                                                             activation = act)
 
 if modelType == 'ML':
@@ -66,7 +66,6 @@ if modelType == 'ML':
                                  databaseVersion=databaseVersion).preProcess(POS_tagging=False)
 
     # Data Vectorization: turning text data into a vector, numerically processable by an algorithm
-    method = 'Word2Vec'
     BoWEmbedding = ns.Vectorize(cleanData).Embedding(method=method)
 
     # Setting the model, compile, train, evaluate the performance on a test set
