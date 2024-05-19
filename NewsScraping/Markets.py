@@ -20,7 +20,7 @@ class Markets:
         from sqlalchemy import create_engine
         from datetime import datetime
 
-        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/YahooFinance')
+        engine = create_engine('postgresql://postgres:Lavagna123!@localhost:5432/YahooFinance')
         query = 'SELECT * FROM public."WorldIndexTickers"'
         marketIndex = pd.read_sql(query, engine)
 
@@ -75,14 +75,14 @@ class Markets:
         from datetime import datetime
 
         # Import the news already downloaded on the day
-        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+        engine = create_engine('postgresql://postgres:Lavagna123!@localhost:5432/News_Data')
         query = 'SELECT * FROM public."News_Scraping_Data_V2"'
         todayNews = pd.read_sql(query, engine)
         today = datetime.today().strftime('%Y.%m.%d')
         tickerNewsOfTheDay = pd.DataFrame(todayNews['Ticker'][todayNews['Date'] == today].unique()).set_axis(['Ticker'],
                                                                                                              axis = 1)
         # Import the Database with all the stocks traded
-        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/YahooFinance')
+        engine = create_engine('postgresql://postgres:Lavagna123!@localhost:5432/YahooFinance')
         query = 'SELECT * FROM public."AllStockTraded"'
         allStocks = pd.read_sql(query, engine)
 
@@ -153,7 +153,7 @@ class Markets:
         import psycopg2
         from sqlalchemy import create_engine
 
-        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/YahooFinance')
+        engine = create_engine('postgresql://postgres:Lavagna123!@localhost:5432/YahooFinance')
         query = 'SELECT * FROM public."WorldIndexTickers"'
         marketIndex = pd.read_sql(query, engine)
 
@@ -209,7 +209,7 @@ class Markets:
 
         # Import AllStocks DB
 
-        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/YahooFinance')
+        engine = create_engine('postgresql://postgres:Lavagna123!@localhost:5432/YahooFinance')
         query = 'SELECT * FROM public."AllStockTraded"'
         allStocks = pd.read_sql(query, engine)
 
@@ -225,12 +225,12 @@ class Markets:
         connection = psycopg2.connect(
             database="YahooFinance",
             user="postgres",
-            password="Davidescemo",
+            password="Lavagna123!",
             host="localhost",
             port="5432"
         )
 
-        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/YahooFinance')
+        engine = create_engine('postgresql://postgres:Lavagna123!@localhost:5432/YahooFinance')
         file.to_sql('AllStockTraded', engine, if_exists='replace', index=False)
 
         connection.close()

@@ -324,12 +324,12 @@ def MassiveNewsScaper(numberOfRandomStocks=50, source='Bing', update_returns=Fal
         connection = psycopg2.connect(
             database="News_Data",
             user="postgres",
-            password="Davidescemo",
+            password="Lavagna123!",
             host="localhost",
             port="5432"
         )
 
-        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+        engine = create_engine('postgresql://postgres:Lavagna123!@localhost:5432/News_Data')
         file.to_sql('News_Scraping_Data', engine, if_exists='replace', index=False)
 
         connection.close()

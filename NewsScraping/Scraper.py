@@ -24,7 +24,7 @@ class Scraper:
 
         # Import the allStock Database to get the country
 
-        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/YahooFinance')
+        engine = create_engine('postgresql://postgres:Lavagna123!@localhost:5432/YahooFinance')
         query = 'SELECT * FROM public."AllStockTraded"'
         allStocks = pd.read_sql(query, engine)
 
@@ -311,12 +311,12 @@ class Scraper:
         connection = psycopg2.connect(
             database="News_Data",
             user="postgres",
-            password="Davidescemo",
+            password="Lavagna123!",
             host="localhost",
             port="5432"
         )
 
-        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+        engine = create_engine('postgresql://postgres:Lavagna123!@localhost:5432/News_Data')
         file.to_sql('News_Scraping_DailyV2', engine, if_exists='replace', index=False)
         #file.to_sql('News_Scraping_Data_V2', engine, if_exists='replace', index=False)
 
@@ -341,7 +341,7 @@ class Scraper:
 
         # Import the Database with the old news
 
-        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+        engine = create_engine('postgresql://postgres:Lavagna123!@localhost:5432/News_Data')
         query = 'SELECT * FROM public."News_Scraping_Data_V2"'
         baseQuery = pd.read_sql(query, engine)
 
@@ -391,12 +391,12 @@ class Scraper:
         connection = psycopg2.connect(
                 database="News_Data",
                 user="postgres",
-                password="Davidescemo",
+                password="Lavagna123!",
                 host="localhost",
                 port="5432"
         )
 
-        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+        engine = create_engine('postgresql://postgres:Lavagna123!@localhost:5432/News_Data')
         file.to_sql('News_Scraping_Data_V2', engine, if_exists='replace', index=False)
 
         connection.close()
@@ -419,7 +419,7 @@ class Scraper:
 
         # Take the base dataset
 
-        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+        engine = create_engine('postgresql://postgres:Lavagna123!@localhost:5432/News_Data')
         query = 'SELECT * FROM public."News_Scraping_Data_V2"'
         baseData = pd.read_sql(query, engine)
 
@@ -480,12 +480,12 @@ class Scraper:
         connection = psycopg2.connect(
             database="News_Data",
             user="postgres",
-            password="Davidescemo",
+            password="Lavagna123!",
             host="localhost",
             port="5432"
         )
 
-        engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+        engine = create_engine('postgresql://postgres:Lavagna123!@localhost:5432/News_Data')
         file.to_sql('News_Scraping_Data_V2', engine, if_exists='replace', index=False)
 
         connection.close()
@@ -501,13 +501,13 @@ class Scraper:
         from sqlalchemy import create_engine
 
         if database == 'total':
-            engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+            engine = create_engine('postgresql://postgres:Lavagna123!@localhost:5432/News_Data')
             query = 'SELECT * FROM public."News_Scraping_Data_V2"'
             data = pd.read_sql(query, engine)
             title = 'TOTAL DATABASE'
 
         if database == 'today':
-            engine = create_engine('postgresql://postgres:Davidescemo@localhost:5432/News_Data')
+            engine = create_engine('postgresql://postgres:Lavagna123!@localhost:5432/News_Data')
             query = 'SELECT * FROM public."News_Scraping_Data_V2"'
             data = pd.read_sql(query, engine)
             data = data[data['Date'] == datetime.today().strftime('%Y.%m.%d')]
